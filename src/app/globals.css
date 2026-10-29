@@ -1,30 +1,57 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("https://db.onlinewebfonts.com/t/4366ceae6f7564999a0f0c3e8698a4ad.woff2") format("woff2"),
+       url("https://db.onlinewebfonts.com/t/4366ceae6f7564999a0f0c3e8698a4ad.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("https://db.onlinewebfonts.com/t/4366ceae6f7564999a0f0c3e8698a4ad.woff2") format("woff2"),
+       url("https://db.onlinewebfonts.com/t/4366ceae6f7564999a0f0c3e8698a4ad.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("https://db.onlinewebfonts.com/t/4366ceae6f7564999a0f0c3e8698a4ad.woff2") format("woff2"),
+       url("https://db.onlinewebfonts.com/t/4366ceae6f7564999a0f0c3e8698a4ad.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("https://db.onlinewebfonts.com/t/4366ceae6f7564999a0f0c3e8698a4ad.woff2") format("woff2"),
+       url("https://db.onlinewebfonts.com/t/4366ceae6f7564999a0f0c3e8698a4ad.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
-  --foreground: #0f172a;
+  --foreground: #09090b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-montserrat: var(--font-montserrat);
-  --font-agdasima: var(--font-agdasima);
+  --font-sans: "PP Neue Montreal", "Neue Montreal", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-body {
+html, body {
   background-color: #ffffff;
-  color: #0f172a;
-  font-family: var(--font-montserrat), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #09090b;
+  font-family: "PP Neue Montreal", "Neue Montreal", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
-}
-
-/* Custom subtle animation for alert pulse */
-@keyframes pulseSubtle {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 0.7; }
-}
-
-.animate-pulse-subtle {
-  animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
