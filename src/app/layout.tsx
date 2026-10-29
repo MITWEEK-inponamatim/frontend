@@ -1,5 +1,43 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
+
+const ppNeueMontreal = localFont({
+  src: [
+    {
+      path: "../../public/font/ppneuemontreal-thin.woff",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/ppneuemontreal-book.woff",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/ppneuemontreal-medium.woff",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/ppneuemontreal-bold.woff",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/ppneuemontreal-italic.woff",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../../public/font/ppneuemontreal-semibolditalic.woff",
+      weight: "600",
+      style: "italic",
+    },
+  ],
+  variable: "--font-pp-neue-montreal",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Anti-Scam AI Platform | Recognize, Learn, Act",
@@ -12,14 +50,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://db.onlinewebfonts.com/c/4366ceae6f7564999a0f0c3e8698a4ad?family=Neue+Montreal"
-        />
-      </head>
-      <body className="min-h-full flex flex-col bg-white text-slate-900 selection:bg-red-100 selection:text-red-900">
+    <html lang="id" className={`${ppNeueMontreal.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-white text-slate-900 selection:bg-red-100 selection:text-red-900 font-sans">
         {children}
       </body>
     </html>
