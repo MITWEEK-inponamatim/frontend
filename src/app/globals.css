@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Direct Local Fallback @font-face */
+/* 1. Unified Fallback @font-face */
 @font-face {
   font-family: "PP Neue Montreal";
   src: url("/font/ppneuemontreal-thin.woff") format("woff");
@@ -33,21 +33,57 @@
   font-display: swap;
 }
 
+/* 2. Named Families from cufonfonts */
+@font-face {
+  font-family: "PP Neue Montreal Thin";
+  src: url("/font/ppneuemontreal-thin.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal Book";
+  src: url("/font/ppneuemontreal-book.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal Medium";
+  src: url("/font/ppneuemontreal-medium.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal Bold";
+  src: url("/font/ppneuemontreal-bold.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #09090b;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-pp-neue-montreal), "PP Neue Montreal", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+@theme {
+  --font-sans: var(--font-pp-neue-montreal), "PP Neue Montreal Book", "PP Neue Montreal", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Reset headings default browser bold */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: inherit;
 }
 
 html, body {
   background-color: #ffffff;
   color: #09090b;
-  font-family: var(--font-pp-neue-montreal), "PP Neue Montreal", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-pp-neue-montreal), "PP Neue Montreal Book", "PP Neue Montreal", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

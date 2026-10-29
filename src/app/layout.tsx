@@ -51,7 +51,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${ppNeueMontreal.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-white text-slate-900 selection:bg-red-100 selection:text-red-900 font-sans">
+      <body className={`${ppNeueMontreal.className} min-h-full flex flex-col bg-white text-slate-900 selection:bg-red-100 selection:text-red-900 font-sans`}>
         {children}
       </body>
     </html>
