@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { Icon } from "@iconify/react";
+import { Icon } from "@/components/ui/Icon";
 
 interface MenuDrawerProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ interface MenuDrawerProps {
 }
 
 const MENU_LINKS = [
-  { label: "Recognize", href: "/" },
+  { label: "Recognize", href: "/recognize" },
   { label: "Learn", href: "/learn" },
   { label: "Act", href: "/act" },
   { label: "Panduan Keamanan", href: "/guide" },

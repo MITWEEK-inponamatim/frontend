@@ -1,224 +1,84 @@
 "use client";
+import { useCallback, useEffect, useState } from "react";
+import { api } from "@/lib/api";
 
-import { useState, useCallback } from "react";
+export type ScanTab = "url" | "message" | "phone" | "application" | "image";
+export type ScanResult = { outcome: string; risk: { level: string; confidence: string; coverage?: { summary?: string; checks_run?: string[]; checks_unavailable?: string[] } }; findings: { id: string; indicator: string; severity: string }[]; evidence_summary: string; recommended_actions: string[]; limitations: string[]; error?: { code: string; message: string } | null };
 
-export type ScanTab = "text" | "file" | "image";
+const ERROR_MESSAGES: Record<string, string> = {
+  invalid_request: "Permintaan tidak valid. Muat ulang halaman lalu coba lagi.",
+  invalid_input: "Masukkan data yang ingin dipindai.",
+  invalid_url: "Tautan tidak valid. Gunakan alamat lengkap yang diawali http:// atau https://.",
+  invalid_phone: "Nomor telepon tidak valid. Periksa kode negara dan jumlah digit.",
+  file_required: "Pilih berkas terlebih dahulu.",
+  file_too_large: "Berkas melebihi batas ukuran. Tangkapan layar maksimal 15 MB, APK maksimal 50 MB.",
+  unsupported_file_type: "Format berkas tidak didukung. Gunakan PNG/JPG/WEBP untuk gambar atau berkas .apk untuk aplikasi.",
+  rate_limited: "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.",
+  duplicate_report: "Anda sudah pernah melaporkan nomor ini. Satu akun hanya bisa melapor sekali per nomor.",
+  invalid_category: "Kategori laporan tidak dikenal. Pilih salah satu kategori yang tersedia.",
+  invalid_note: "Catatan terlalu panjang. Maksimal 280 karakter.",
+  storage_unavailable: "Berkas gagal disimpan sementara. Coba lagi sebentar lagi.",
+  service_unavailable: "Layanan sedang tidak tersedia. Coba lagi nanti.",
+  unauthenticated: "Sesi tidak valid. Silakan masuk kembali.",
+  session_required: "Sesi belum diverifikasi. Silakan masuk kembali.",
+  session_expired_idle: "Sesi berakhir karena tidak ada aktivitas. Silakan masuk kembali.",
+  session_expired_absolute: "Sesi berakhir. Silakan masuk kembali.",
+  not_found: "Scan tidak ditemukan.",
+  request_failed: "Scan tidak dapat dikirim. Periksa koneksi lalu coba lagi.",
+};
 
-export interface ScanResult {
-  status: "safe" | "suspicious" | "high_risk";
-  threatScore: number; // 0 - 100
-  title: string;
-  summary: string;
-  details: string[];
-  recommendation: string;
+export function messageForError(code: string | undefined | null): string {
+  if (!code) return ERROR_MESSAGES.request_failed;
+  return ERROR_MESSAGES[code] ?? ERROR_MESSAGES.request_failed;
+}
+
+function digitsOnly(value: string) {
+  return value.replace(/\D/g, "");
 }
 
 export function useScanner() {
-  const [activeTab, setActiveTab] = useState<ScanTab>("text");
-  
-  // Inputs
-  const [textContent, setTextContent] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-
-  // States
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanStep, setScanStep] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [result, setResult] = useState<ScanResult | null>(null);
-
-  const handleTextChange = useCallback((value: string) => {
-    setTextContent(value);
-    if (errorMessage) setErrorMessage(null);
-  }, [errorMessage]);
-
-  const handleFileSelect = useCallback((file: File | null) => {
-    if (!file) {
-      setSelectedFile(null);
-      return;
-    }
-
-    // Limit 50MB
-    if (file.size > 50 * 1024 * 1024) {
-      setErrorMessage("Ukuran file melebihi batas maksimum 50MB.");
-      return;
-    }
-
-    setSelectedFile(file);
-    setErrorMessage(null);
-  }, []);
-
-  const handleImageSelect = useCallback((file: File | null) => {
-    if (!file) {
-      setSelectedImage(null);
-      setImagePreviewUrl(null);
-      return;
-    }
-
-    // Limit 15MB
-    if (file.size > 15 * 1024 * 1024) {
-      setErrorMessage("Ukuran gambar melebihi batas maksimum 15MB.");
-      return;
-    }
-
-    setSelectedImage(file);
-    setErrorMessage(null);
-
-    const objectUrl = URL.createObjectURL(file);
-    setImagePreviewUrl(objectUrl);
-  }, []);
-
-  const resetScan = useCallback(() => {
-    setResult(null);
-    setErrorMessage(null);
-    setIsScanning(false);
-    setScanStep("");
-  }, []);
-
-  const clearCurrentInput = useCallback(() => {
-    if (activeTab === "text") {
-      setTextContent("");
-    } else if (activeTab === "file") {
-      setSelectedFile(null);
-    } else if (activeTab === "image") {
-      if (imagePreviewUrl) {
-        URL.revokeObjectURL(imagePreviewUrl);
+  const [activeTab, setActiveTab] = useState<ScanTab>("url"); const [input, setInput] = useState(""); const [number, setNumber] = useState(""); const [region, setRegion] = useState("ID"); const [file, setFile] = useState<File | null>(null); const [consent, setConsent] = useState(false);
+  const [isScanning, setIsScanning] = useState(false); const [scanStep, setScanStep] = useState(""); const [errorMessage, setErrorMessage] = useState<string | null>(null); const [result, setResult] = useState<ScanResult | null>(null);
+  const [scanId, setScanId] = useState("");
+  const resetScan = useCallback(() => { setResult(null); setErrorMessage(null); setScanId(""); setIsScanning(false); setScanStep(""); }, []);
+  useEffect(() => {
+    if (!scanId) return;
+    let live = true;
+    const poll = async () => {
+      try {
+        const response = await api(`/api/v1/scans/${scanId}`, { headers: { "X-Activity": "passive" } });
+        if (!live) return;
+        if (response.status === "completed" || response.status === "failed") { setResult(response.report); setIsScanning(false); setScanStep(""); setScanId(""); return; }
+        setScanStep("Menganalisis bukti..."); setTimeout(poll, 2000);
+      } catch (error) {
+        if (!live) return;
+        setErrorMessage(messageForError(error instanceof Error ? error.message : null)); setIsScanning(false); setScanId(""); setScanStep("");
       }
-      setSelectedImage(null);
-      setImagePreviewUrl(null);
-    }
-    setErrorMessage(null);
-    setResult(null);
-  }, [activeTab, imagePreviewUrl]);
-
+    };
+    const timer = setTimeout(poll, 1000);
+    return () => { live = false; clearTimeout(timer); };
+  }, [scanId]);
   const runScan = useCallback(async () => {
-    setErrorMessage(null);
-    setResult(null);
-
-    // Validation
-    if (activeTab === "text" && !textContent.trim()) {
-      setErrorMessage("Silakan tempel tautan (URL), nomor telepon, atau pesan teks yang ingin diperiksa.");
-      return;
+    setErrorMessage(null); setResult(null);
+    if ((activeTab === "url" || activeTab === "message") && !input.trim()) { setErrorMessage("Masukkan data yang ingin dipindai."); return; }
+    if (activeTab === "phone") {
+      if (!number.trim()) { setErrorMessage("Masukkan nomor telepon."); return; }
+      const digits = digitsOnly(number);
+      if (digits.length < 7 || digits.length > 15) { setErrorMessage("Nomor telepon tidak valid. Gunakan 7–15 digit."); return; }
     }
-
-    if (activeTab === "file" && !selectedFile) {
-      setErrorMessage("Silakan unggah file dokumen atau installer APK terlebih dahulu.");
-      return;
-    }
-
-    if (activeTab === "image" && !selectedImage) {
-      setErrorMessage("Silakan pilih atau seret bukti tangkapan layar (screenshot) ke area unggah.");
-      return;
-    }
-
-    // Start Scanning Simulation
-    setIsScanning(true);
-    setScanStep("Mengekstraksi metadata & tanda digital...");
-
+    if ((activeTab === "application" || activeTab === "image") && !file) { setErrorMessage("Pilih berkas terlebih dahulu."); return; }
+    setIsScanning(true); setScanStep("Mengirim scan...");
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setScanStep("Memeriksa basis data ancaman & blacklist AI...");
-
-      await new Promise((resolve) => setTimeout(resolve, 900));
-      setScanStep("Menganalisis pola rekayasa sosial & heuristik...");
-
-      await new Promise((resolve) => setTimeout(resolve, 700));
-
-      // Generate context-aware mock result
-      if (activeTab === "text") {
-        const lower = textContent.toLowerCase();
-        if (lower.includes("bit.ly") || lower.includes("undian") || lower.includes("hadiah") || lower.includes("login") || lower.includes("bank")) {
-          setResult({
-            status: "high_risk",
-            threatScore: 94,
-            title: "Terdeteksi Indikasi Kuat Phishing Scam",
-            summary: "Tautan atau teks mengandung pola rekayasa sosial manipulatif yang memalsukan institusi resmi.",
-            details: [
-              "Menggunakan pemendek tautan untuk menyamarkan alamat server tujuan.",
-              "Domain server tidak terdaftar dalam sertifikat perbankan/resmi.",
-              "Pola kalimat mendesak korban untuk menyerahkan kredensial OTP/PIN.",
-            ],
-            recommendation: "JANGAN klik tautan atau berikan informasi sensitif apa pun. Segera blokir kontak pengirim.",
-          });
-        } else {
-          setResult({
-            status: "safe",
-            threatScore: 8,
-            title: "Tidak Ditemukan Pola Ancaman Dikenal",
-            summary: "Teks atau URL yang dimasukkan memiliki reputasi domain yang valid dan tidak terdapat ancaman aktif.",
-            details: [
-              "Domain memiliki reputasi SSL terpercaya.",
-              "Tidak ditemukan dalam daftar hitam (blacklist) penipuan nasional.",
-            ],
-            recommendation: "Tetap waspada dan jangan pernah membagikan kata sandi atau kode OTP kepada pihak mana pun.",
-          });
-        }
-      } else if (activeTab === "file") {
-        const fileName = selectedFile?.name.toLowerCase() || "";
-        if (fileName.endsWith(".apk") || fileName.includes("surat") || fileName.includes("paket")) {
-          setResult({
-            status: "high_risk",
-            threatScore: 98,
-            title: "Malware / Trojan APK Berbahaya Terdeteksi",
-            summary: `File "${selectedFile?.name}" teridentifikasi sebagai spyware penyadap SMS/OTP perbankan.`,
-            details: [
-              "Izin akses berbahaya: READ_SMS, RECEIVE_SMS, ACCESSIBILITY_SERVICE.",
-              "Berusaha mencuri notifikasi bank secara diam-diam di latar belakang.",
-              "Tanda tangan digital tidak bersumber dari Google Play Store resmi.",
-            ],
-            recommendation: "JANGAN INSTALL file ini pada perangkat Android Anda! Segera hapus file installer dari penyimpanan.",
-          });
-        } else {
-          setResult({
-            status: "safe",
-            threatScore: 5,
-            title: "File Bersih Tanpa Malware",
-            summary: `Tidak ditemukan payload berbahaya pada file "${selectedFile?.name}".`,
-            details: [
-              "Struktur file sesuai dengan format standar dan aman dibuka.",
-              "Tidak terdapat script eksekusi tersembunyi.",
-            ],
-            recommendation: "File aman untuk diarsipkan.",
-          });
-        }
-      } else if (activeTab === "image") {
-        setResult({
-          status: "suspicious",
-          threatScore: 78,
-          title: "Terdeteksi Bukti Transfer / Chat Manipulatif",
-          summary: "AI mendeteksi anomali font dan tata letak bukti mutasi yang tidak lazim pada tangkapan layar.",
-          details: [
-            "Piksel font pada bagian nominal transfer terindikasi hasil suntingan gambar.",
-            "Nomor referensi transaksi tidak sinkron dengan format standar perbankan.",
-          ],
-          recommendation: "Cek langsung mutasi pada rekening/aplikasi bank resmi Anda sebelum mengirimkan barang atau memproses pesanan.",
-        });
-      }
-    } catch {
-      setErrorMessage("Terjadi kendala saat menganalisis. Silakan coba kembali.");
-    } finally {
-      setIsScanning(false);
-      setScanStep("");
+      let response;
+      if (activeTab === "url") response = await api("/api/v1/scans/url", { method: "POST", body: JSON.stringify({ url: input }) });
+      else if (activeTab === "message") response = await api("/api/v1/scans/message", { method: "POST", body: JSON.stringify({ text: input }) });
+      else if (activeTab === "phone") response = await api("/api/v1/scans/phone", { method: "POST", body: JSON.stringify({ number, default_region: region }) });
+      else { const body = new FormData(); body.set("file", file!); if (activeTab === "application") body.set("consent_external_upload", String(consent)); response = await api(`/api/v1/scans/${activeTab}`, { method: "POST", body }); }
+      setScanId(response.scan_id);
+      setScanStep(activeTab === "application" ? "Mengunggah berkas dan menganalisis..." : "Mengantrekan scan...");
+    } catch (error) {
+      setErrorMessage(messageForError(error instanceof Error ? error.message : null)); setIsScanning(false); setScanStep("");
     }
-  }, [activeTab, textContent, selectedFile, selectedImage]);
-
-  return {
-    activeTab,
-    setActiveTab,
-    textContent,
-    handleTextChange,
-    selectedFile,
-    handleFileSelect,
-    selectedImage,
-    imagePreviewUrl,
-    handleImageSelect,
-    isScanning,
-    scanStep,
-    errorMessage,
-    result,
-    runScan,
-    resetScan,
-    clearCurrentInput,
-  };
+  }, [activeTab, input, number, region, file, consent]);
+  return { activeTab, setActiveTab, input, setInput, number, setNumber, region, setRegion, file, setFile, consent, setConsent, isScanning, scanStep, errorMessage, result, runScan, resetScan };
 }

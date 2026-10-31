@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Icon } from "@iconify/react";
+import { Icon } from "@/components/ui/Icon";
 
 interface ContactModalProps {
   isOpen: boolean;
