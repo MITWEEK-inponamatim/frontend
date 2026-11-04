@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { api } from "@/lib/api";
 import { messageForError } from "@/hooks/useScanner";
@@ -14,34 +14,57 @@ const CATEGORIES: { id: string; label: string }[] = [
   { id: "lainnya", label: "Lainnya" },
 ];
 
+// Same ceiling as MAX_EVIDENCE_MB (Go) and MAX_EVIDENCE_BYTES (analysis service). Checking it
+// here only saves the reporter an upload that the API would refuse anyway.
+const MAX_EVIDENCE_MB = 5;
+const EVIDENCE_TYPES = "image/png,image/jpeg,image/webp,image/heic,image/heif";
+
 type ReportResponse = { number_e164?: string; status?: string; note_saved?: boolean };
 
 /**
  * Community report form for the scanned number.
  *
  * A report is a user claim, not a verdict: it is stored as "pending" and only a moderator can
- * turn it into "verified". The copy below keeps saying that, so the UI never implies that one
- * report proves anything about the number's owner.
+ * turn it into "verified". The proof image is mandatory and sent with the report as one request,
+ * so a report cannot exist without the evidence that justifies it.
  */
-export function PhoneReportForm({ number, region }: { number: string; region: string }) {
+export function PhoneReportForm({ number }: { number: string }) {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("penipuan");
   const [note, setNote] = useState("");
+  const [evidence, setEvidence] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [problem, setProblem] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState<ReportResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const pickEvidence = (file: File | null) => {
+    setPreview((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return file ? URL.createObjectURL(file) : null;
+    });
+    setEvidence(file);
+    setProblem(file && file.size > MAX_EVIDENCE_MB * 1048576 ? messageForError("evidence_too_large") : "");
+  };
 
   const submit = async () => {
+    if (!evidence) return;
     setSending(true);
     setError(null);
+    setProblem("");
     try {
-      const response = (await api("/api/v1/phone-reports", {
-        method: "POST",
-        body: JSON.stringify({ number, default_region: region, category, note: note.trim() }),
-      })) as ReportResponse | null;
+      const body = new FormData();
+      body.set("number", number);
+      body.set("default_region", "ID");
+      body.set("category", category);
+      body.set("note", note.trim());
+      body.set("evidence", evidence, evidence.name);
+      const response = (await api("/api/v1/phone-reports", { method: "POST", body })) as ReportResponse | null;
       setSent(response ?? { status: "pending" });
-    } catch (problem) {
-      setError(messageForError(problem instanceof Error ? problem.message : null));
+    } catch (failure) {
+      setError(messageForError(failure instanceof Error ? failure.message : null));
     } finally {
       setSending(false);
     }
@@ -53,8 +76,8 @@ export function PhoneReportForm({ number, region }: { number: string; region: st
         <p className="flex items-start gap-2">
           <Icon icon="solar:check-circle-bold-duotone" className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
           <span>
-            Laporan terkirim dan menunggu moderasi{sent.number_e164 ? ` (${sent.number_e164})` : ""}. Laporan baru
-            menaikkan risiko setelah diverifikasi, dan laporan komunitas tetap bukan bukti tindak pidana.
+            Laporan dan bukti gambar terkirim, menunggu moderasi{sent.number_e164 ? ` (${sent.number_e164})` : ""}. Laporan
+            baru menaikkan risiko setelah diverifikasi, dan laporan komunitas tetap bukan bukti tindak pidana.
             {sent.note_saved === false ? " Catatan tambahan tidak tersimpan, laporan tetap tercatat." : ""}
           </span>
         </p>
@@ -79,6 +102,26 @@ export function PhoneReportForm({ number, region }: { number: string; region: st
           className="w-full rounded-xl border border-gray-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/20">
           {CATEGORIES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
         </select>
+
+        <label className="block text-[11px] font-medium uppercase tracking-wider text-slate-400" htmlFor="phone-report-evidence">Bukti gambar (wajib)</label>
+        <input ref={fileRef} id="phone-report-evidence" type="file" accept={EVIDENCE_TYPES} disabled={sending}
+          onChange={(event) => pickEvidence(event.target.files?.[0] ?? null)}
+          className="w-full rounded-xl border border-gray-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-200 file:px-3 file:py-1 file:text-[11px] file:text-slate-700" />
+        {preview && <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-slate-50 p-2">
+          {/* eslint-disable-next-line @next/next/no-img-element -- a local object URL, shown only to the reporter before upload. */}
+          <img src={preview} alt="Pratinjau bukti" className="h-14 w-14 rounded-lg border border-gray-200 object-cover" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[11px] text-slate-700">{evidence?.name}</p>
+            <p className="text-[11px] text-slate-400">{evidence ? (evidence.size / 1048576).toFixed(2) : "0"} MB</p>
+          </div>
+          <button type="button" onClick={() => { pickEvidence(null); if (fileRef.current) fileRef.current.value = ""; }} aria-label="Hapus bukti gambar"
+            className="rounded-lg p-1.5 text-slate-400 hover:text-red-600"><Icon icon="solar:trash-bin-trash-bold-duotone" className="h-4 w-4" /></button>
+        </div>}
+        <p className="text-[11px] leading-relaxed text-slate-400">
+          Tangkapan layar chat, foto profil, atau bukti lain. Gambar disimpan di penyimpanan berkas kami dan tampil
+          bersama laporan Anda. Jangan lampirkan data pribadi orang lain.
+        </p>
+
         <label className="block text-[11px] font-medium uppercase tracking-wider text-slate-400" htmlFor="phone-report-note">Catatan untuk moderator (opsional)</label>
         <textarea id="phone-report-note" rows={2} maxLength={280} value={note} disabled={sending} onChange={(event) => setNote(event.target.value)}
           placeholder="Misalnya isi pesan yang diterima. Jangan tulis data pribadi orang lain."
@@ -87,11 +130,12 @@ export function PhoneReportForm({ number, region }: { number: string; region: st
           Satu laporan per nomor per akun. Laporan disimpan sebagai <span className="text-slate-500">pending</span> dan
           hanya menaikkan risiko setelah diverifikasi moderator. Nomor bisa dipalsukan dan berpindah pemilik.
         </p>
+        {problem && <p role="alert" className="text-xs text-red-600">{problem}</p>}
         {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
-        <button type="button" onClick={submit} disabled={sending}
+        <button type="button" onClick={submit} disabled={sending || !evidence}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 disabled:bg-slate-200 disabled:text-slate-400">
           {sending ? <Icon icon="solar:restart-bold-duotone" className="h-3.5 w-3.5 animate-spin" /> : <Icon icon="solar:flag-bold" className="h-3.5 w-3.5" />}
-          <span>{sending ? "Mengirim laporan..." : "Kirim laporan"}</span>
+          <span>{sending ? "Mengirim laporan..." : evidence ? "Kirim laporan dengan bukti" : "Lampirkan bukti dulu"}</span>
         </button>
       </div>}
     </div>

@@ -11,7 +11,7 @@ const PHRASES = [
   "struk transfer palsu.",
 ];
 
-export function HeroSection() {
+export function HeroSection({ scanner = null }: { scanner?: React.ReactNode }) {
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -55,7 +55,7 @@ export function HeroSection() {
         </h1>
 
         {/* Recognize Action Area */}
-        <RecognizeCard />
+        {scanner ?? <RecognizeCard />}
 
         {/* Bottom Category Tags */}
         <div className="mt-10 sm:mt-12 text-center">

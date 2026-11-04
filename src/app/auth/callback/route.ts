@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-
-const safeNext = (value: string | null) => value && value.startsWith("/") && !value.startsWith("//") && ["/", "/recognize", "/history"].includes(value) ? value : "/recognize";
+import { safeNext } from "@/lib/paths";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");

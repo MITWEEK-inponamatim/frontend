@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-
-const safeNext = (path: string | null) => path && path.startsWith("/") && !path.startsWith("//") && ["/", "/recognize", "/history"].includes(path) ? path : "/recognize";
+import { safeNext } from "@/lib/paths";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -16,7 +15,7 @@ export async function proxy(request: NextRequest) {
   if (!user && !["/", "/login", "/auth/callback"].includes(path)) {
     const login = new URL("/login", request.url); login.searchParams.set("next", safeNext(path)); return NextResponse.redirect(login);
   }
-  if (user && path === "/login") return NextResponse.redirect(new URL(safeNext(request.nextUrl.searchParams.get("next"))!, request.url));
+  if (user && path === "/login") return NextResponse.redirect(new URL(safeNext(request.nextUrl.searchParams.get("next")), request.url));
   return response;
 }
 

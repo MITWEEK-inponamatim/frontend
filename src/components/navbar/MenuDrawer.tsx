@@ -14,6 +14,7 @@ const MENU_LINKS = [
   { label: "Recognize", href: "/recognize" },
   { label: "Learn", href: "/learn" },
   { label: "Act", href: "/act" },
+  { label: "Komunitas", href: "/community/latest" },
   { label: "Panduan Keamanan", href: "/guide" },
 ];
 

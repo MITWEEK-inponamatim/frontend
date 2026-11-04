@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Navbar, type Account } from "@/components/navbar/Navbar";
 import { SideOrnaments } from "@/components/hero/SideOrnaments";
 import { HeroSection } from "@/components/hero/HeroSection";
@@ -5,13 +6,16 @@ import { ThreatsSection } from "@/components/threats/ThreatsSection";
 import { WarningSection } from "@/components/warning/WarningSection";
 
 /**
- * Shared page shell so `/` and `/recognize` stay visually identical.
+ * Shared page shell so `/`, `/recognize`, and the number pages stay visually identical.
  *
- * The only sanctioned difference is the navbar: `/recognize` passes an `account`, which adds
- * the profile photo and the logout button. Anything else that diverges here diverts the two
- * pages over time, so keep layout changes in this component.
+ * Two sanctioned differences: `account` adds the profile photo and logout button to the navbar,
+ * and `scanner` replaces the scan card in the hero (used by /recognize/phone/[nomor], where the
+ * card shows one number instead of an empty form). The community board is not in here on purpose:
+ * it is read like a noticeboard, not looked at like a landing page, so it lives in
+ * components/community/CommunityShell.tsx with its own type and palette. Anything else that
+ * diverges here diverts the pages over time, so keep layout changes in this component.
  */
-export function SiteShell({ account = null }: { account?: Account | null }) {
+export function SiteShell({ account = null, scanner = null }: { account?: Account | null; scanner?: ReactNode }) {
   return (
     <div className="relative min-h-screen w-full bg-white text-slate-900 overflow-x-hidden flex flex-col justify-between">
       {/* Hero viewport with dedicated side ornaments */}
@@ -19,7 +23,7 @@ export function SiteShell({ account = null }: { account?: Account | null }) {
         <SideOrnaments />
         <Navbar account={account} />
         <div className="relative z-10 flex-1 flex flex-col justify-center">
-          <HeroSection />
+          <HeroSection scanner={scanner} />
         </div>
       </div>
 

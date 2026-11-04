@@ -41,7 +41,7 @@ const ppNeueMontreal = localFont({
 
 export const metadata: Metadata = {
   title: "Anti-Scam AI Platform | Recognize, Learn, Act",
-  description: "Advanced AI-powered Scam Detection Platform. Recognize threats in links, APKs, files, and images.",
+  description: "Advanced AI-powered Scam Detection Platform. Recognize threats in links, APK files, and phone numbers.",
 };
 
 export default function RootLayout({

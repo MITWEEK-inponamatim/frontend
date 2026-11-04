@@ -75,6 +75,44 @@
   --font-sans: var(--font-pp-neue-montreal), "PP Neue Montreal Book", "PP Neue Montreal", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Papan cerita warga (/community) ditata seperti feed foto, bukan halaman promosi: kanvas nyaris
+   putih, permukaan putih, satu helai garis pemisah, satu biru untuk tindakan, satu merah khusus
+   nomor yang benar-benar berbahaya. Tidak ada serif dan tidak ada bayangan — yang harus dibaca
+   orang adalah tangkapan layar bukti, bukan kartunya. Nama token diberi awalan "pos-" supaya tidak
+   bertabrakan dengan palet landing; landing page tidak memakai satu pun token ini. */
+@theme {
+  --font-pos-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, Arial, sans-serif;
+  --color-pos-shell: #fafafa;
+  --color-pos-card: #ffffff;
+  --color-pos-line: #dbdbdb;
+  --color-pos-ink: #262626;
+  --color-pos-muted: #8e8e8e;
+  --color-pos-action: #0095f6;
+  /* Biru di atas putih baru ~3:1, cukup untuk ikon dan garis, tidak untuk teks 13px; tautan dan
+     tombol teks memakai versi tuanya supaya tetap terbaca. */
+  --color-pos-action-tua: #0a5fa8;
+  --color-pos-flag: #ed4956;
+  --color-pos-good: #1f7a3f;
+  --color-pos-bad: #b23a33;
+}
+
+/* Satu-satunya gerak di papan: panah menilai membesar sekilas ketika suara tercatat. */
+@keyframes pos-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+
+.pos-pop {
+  animation: pos-pop 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pos-pop {
+    animation: none;
+  }
+}
+
 /* Reset headings default browser bold */
 h1, h2, h3, h4, h5, h6 {
   font-weight: inherit;

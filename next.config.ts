@@ -8,7 +8,8 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   "object-src 'none'",
-  "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com",
+  // Cloudinary serves the proof images attached to community phone reports.
+  "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com https://res.cloudinary.com",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
