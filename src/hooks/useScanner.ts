@@ -1,5 +1,6 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { canonicalPhone, isPlausibleIndonesianNumber } from "@/lib/phone";
 
@@ -40,9 +41,13 @@ export function messageForError(code: string | undefined | null): string {
 }
 
 export function useScanner() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ScanTab>("url"); const [input, setInput] = useState(""); const [number, setNumber] = useState(""); const [file, setFile] = useState<File | null>(null); const [consent, setConsent] = useState(false);
   const [isScanning, setIsScanning] = useState(false); const [scanStep, setScanStep] = useState(""); const [errorMessage, setErrorMessage] = useState<string | null>(null); const [result, setResult] = useState<ScanResult | null>(null);
   const [scanId, setScanId] = useState("");
+  // Which kind of check the current scanId belongs to. A ref because the poll reads it once, when
+  // the verdict arrives, and nothing on screen is derived from it.
+  const runningKind = useRef<ScanTab>("url");
   const resetScan = useCallback(() => { setResult(null); setErrorMessage(null); setScanId(""); setIsScanning(false); setScanStep(""); }, []);
   useEffect(() => {
     if (!scanId) return;
@@ -51,7 +56,14 @@ export function useScanner() {
       try {
         const response = await api(`/api/v1/scans/${scanId}`, { headers: { "X-Activity": "passive" } });
         if (!live) return;
-        if (response.status === "completed" || response.status === "failed") { setResult(response.report); setIsScanning(false); setScanStep(""); setScanId(""); return; }
+        if (response.status === "completed" || response.status === "failed") {
+          setResult(response.report); setIsScanning(false); setScanStep(""); setScanId("");
+          // A finished link or APK check moves to its own address, which is what the history list
+          // then points at. The phone verdict keeps going to its number page instead.
+          if (runningKind.current === "url") router.push(`/recognize/url/${scanId}`);
+          if (runningKind.current === "application") router.push(`/recognize/apk/${scanId}`);
+          return;
+        }
         setScanStep("Menganalisis bukti..."); setTimeout(poll, 2000);
       } catch (error) {
         if (!live) return;
@@ -60,7 +72,7 @@ export function useScanner() {
     };
     const timer = setTimeout(poll, 1000);
     return () => { live = false; clearTimeout(timer); };
-  }, [scanId]);
+  }, [scanId, router]);
   const submit = useCallback(async (tab: ScanTab, value: string) => {
     setErrorMessage(null); setResult(null);
     if (tab === "url" && !value.trim()) { setErrorMessage("Masukkan tautan yang ingin dipindai."); return; }
@@ -70,7 +82,7 @@ export function useScanner() {
       if (!isPlausibleIndonesianNumber(value)) { setErrorMessage("Nomor Indonesia membutuhkan 9–12 digit setelah +62, misalnya 081234567890."); return; }
     }
     if (tab === "application" && !file) { setErrorMessage("Pilih berkas terlebih dahulu."); return; }
-    setIsScanning(true); setScanStep("Mengirim scan...");
+    setIsScanning(true); setScanStep("Mengirim scan..."); runningKind.current = tab;
     try {
       let response;
       // The phone body is the canonical +62 form, not what was typed, so 0812… and +62 0812…

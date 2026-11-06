@@ -2,19 +2,16 @@
 
 import type { ReactNode } from "react";
 import { Icon } from "@/components/ui/Icon";
+import { scanOutcomeLabel } from "@/lib/scanRecord";
 import type { ScanResult } from "@/hooks/useScanner";
 
-const OUTCOME_LABELS: Record<string, string> = {
-  confirmed_threat: "Ancaman terkonfirmasi",
-  suspicious: "Mencurigakan",
-  scan_failed: "Scan gagal",
-};
-
 /**
- * The verdict block, shared by /recognize (tautan dan APK) and /recognize/phone/[nomor].
+ * The verdict block, shared by /recognize (tautan dan APK), the per-scan result pages, and
+ * /recognize/phone/[nomor].
  *
- * One copy exists because two copies drift: the phone page and the scan card must describe the
- * same risk level, the same findings, and the same coverage gap in the same words.
+ * One copy exists because two copies drift: every one of those surfaces has to describe the same
+ * risk level, the same findings, and the same coverage gap in the same words. The outcome label
+ * comes from lib/scanRecord.ts for the same reason — the history list names the verdict with it.
  */
 export function ScanResultPanel({ result, resetLabel, onReset, footer }: {
   result: ScanResult;
@@ -35,7 +32,7 @@ export function ScanResultPanel({ result, resetLabel, onReset, footer }: {
             </span>
             <div>
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${tone === "red" ? "bg-red-200/70 text-red-800" : tone === "amber" ? "bg-amber-200/70 text-amber-800" : "bg-slate-200 text-slate-700"}`}>
-                {OUTCOME_LABELS[result.outcome] ?? "Bukti belum cukup"}
+                {scanOutcomeLabel(result.outcome)}
               </span>
               <h4 className="mt-1 text-base font-normal text-slate-900">Risiko {result.risk?.level ?? "unknown"}</h4>
             </div>

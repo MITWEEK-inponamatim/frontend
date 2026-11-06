@@ -12,8 +12,7 @@ interface MenuDrawerProps {
 
 const MENU_LINKS = [
   { label: "Recognize", href: "/recognize" },
-  { label: "Learn", href: "/learn" },
-  { label: "Act", href: "/act" },
+  { label: "Riwayat", href: "/history" },
   { label: "Komunitas", href: "/community/latest" },
   { label: "Panduan Keamanan", href: "/guide" },
 ];
