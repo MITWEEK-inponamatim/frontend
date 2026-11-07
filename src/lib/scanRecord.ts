@@ -1,3 +1,5 @@
+import { canonicalPhone, formatDisplayPhone } from "@/lib/phone";
+
 /**
  * Reading a stored scan back: what it was about, and what it is called on screen.
  *
@@ -14,13 +16,22 @@ export function scanKindLabel(type: string) {
   return SCAN_KIND_META[type]?.label ?? "Pemeriksaan";
 }
 
-// A stored APK check is filed as "<akun>/<scan>/<nama berkas>", so the last segment is the only
-// part a person recognises. A link is stored exactly as it was typed and shown the same way.
+/**
+ * Formats a scan input reference into a human-readable display label.
+ *
+ * @param type - Scan kind ("url", "application", or "phone").
+ * @param ref - Raw reference string from the database.
+ */
 export function scanTargetLabel(type: string, ref: string | null | undefined) {
   if (!ref) return "";
-  if (type !== "application") return ref;
-  const segments = ref.split("/");
-  return segments[segments.length - 1] ?? "";
+  if (type === "application") {
+    const segments = ref.split("/");
+    return segments[segments.length - 1] ?? "";
+  }
+  if (type === "phone") {
+    return formatDisplayPhone(ref) || canonicalPhone(ref) || ref;
+  }
+  return ref;
 }
 
 export function isScanFinished(status: string) {
@@ -33,8 +44,11 @@ const OUTCOME_LABELS: Record<string, string> = {
   scan_failed: "Scan gagal",
 };
 
-// The verdict word, used by the result page and the history list alike: a check that decided
-// neither a threat nor a suspicion is described by what it still lacks.
+/**
+ * Returns human-friendly text label for a scan outcome.
+ *
+ * @param outcome - Stored scan outcome string.
+ */
 export function scanOutcomeLabel(outcome: string | null | undefined) {
   return OUTCOME_LABELS[outcome ?? ""] ?? "Bukti belum cukup";
 }

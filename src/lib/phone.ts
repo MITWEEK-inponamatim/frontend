@@ -19,6 +19,25 @@ export function canonicalPhone(value: string) {
   return subscriber ? `+62${subscriber}` : "";
 }
 
+/**
+ * Formats an Indonesian phone number into standard chunked display: +62 8xx-xxxx-xxxx
+ *
+ * @param value - Raw or canonical phone number string.
+ */
+export function formatDisplayPhone(value: string) {
+  const canon = canonicalPhone(value);
+  if (!canon) return value;
+  const subscriber = subscriberDigits(value);
+  if (!subscriber) return canon;
+  if (subscriber.length >= 9) {
+    const prefix = subscriber.slice(0, 3);
+    const mid = subscriber.slice(3, 7);
+    const rest = subscriber.slice(7);
+    return `+62 ${prefix}-${mid}-${rest}`;
+  }
+  return canon;
+}
+
 // The number as it appears in a URL segment: no "+" (which would be percent-encoded) and no
 // separators, so /recognize/phone/6281234567890 is the one canonical address for a number.
 export function phoneSlug(value: string) {

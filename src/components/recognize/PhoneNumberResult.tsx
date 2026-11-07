@@ -1,80 +1,143 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
+import { ErrorToast } from "@/components/ui/Toast";
 import { PhoneReportForm } from "@/components/recognize/PhoneReportForm";
 import { ScanResultPanel } from "@/components/recognize/ScanResultPanel";
 import { useScanner } from "@/hooks/useScanner";
 import { readPhoneResult } from "@/lib/phoneHandoff";
-import { canonicalPhone, phoneInputProblem, phoneSlug } from "@/lib/phone";
+import { canonicalPhone, formatDisplayPhone } from "@/lib/phone";
 
 /**
- * The verdict for one Indonesian number, at its own address: /recognize/phone/6281234567890.
+ * Reconstructed Forensic Record View for Indonesian Phone Numbers:
+ * Target header and clean left-aligned section title positioned outside before the card,
+ * with a single seamless result card underneath.
  *
- * Usually the verdict arrives with the user: the search box on /recognize waits for the scan and
- * hands the finished report over before changing address. Arriving by bookmark or from somebody
- * else's link hands nothing over, and only then does this page run the check itself.
+ * @param slug - The canonical phone digits string (e.g., "6281234567890").
  */
 export function PhoneNumberResult({ slug }: { slug: string }) {
   const scan = useScanner();
   const router = useRouter();
-  const searchRef = useRef<HTMLInputElement>(null);
-  const [term, setTerm] = useState("");
-  const [problem, setProblem] = useState("");
+  const [copied, setCopied] = useState(false);
   const startPhoneScan = scan.startPhoneScan;
   const canonical = canonicalPhone(`+${slug}`);
-  const [hiddenSlug, setHiddenSlug] = useState("");
-  // The verdict handed over by /recognize is read straight from the cache instead of copied into
-  // state: reading does not consume it, so the value is the same on every render and every pass of
-  // the effect below, and nothing has to be re-set to be shown.
-  const arrived = readPhoneResult(slug);
-  const shown = hiddenSlug === slug ? scan.result : scan.result ?? arrived;
 
-  // Only a number nobody just checked gets scanned here.
+  const arrived = readPhoneResult(slug);
+  const shown = scan.result ?? arrived;
+
   useEffect(() => {
     if (!readPhoneResult(slug)) startPhoneScan(`+${slug}`);
   }, [slug, startPhoneScan]);
 
-  const search = (event: React.FormEvent) => {
-    event.preventDefault();
-    const reason = phoneInputProblem(term);
-    setProblem(reason);
-    if (reason) return;
-    const next = phoneSlug(term);
-    // Pushing the address the page already has would be a no-op, so re-run the scan instead.
-    if (next === slug) {
-      setHiddenSlug(slug);
-      startPhoneScan(term);
+  const handleCopyLink = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
-    else router.push(`/recognize/phone/${next}`);
+  };
+
+  const handleReset = () => {
+    router.push("/recognize");
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col items-center">
-      <div className="relative w-full rounded-2xl border border-gray-200/90 bg-white p-4 shadow-sm transition-all hover:shadow-md sm:rounded-3xl sm:p-5">
-        <div className="mb-3 flex items-center gap-2.5">
-          <span className="rounded-xl bg-slate-900 p-2 text-white"><Icon icon="solar:phone-bold-duotone" className="h-5 w-5" /></span>
-          <div>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-600">Nomor Indonesia</span>
-            <h4 className="mt-1 break-all text-base font-medium text-slate-900">{canonical}</h4>
-          </div>
+    <div className="w-full max-w-3xl lg:max-w-4xl mx-auto space-y-4 text-left">
+      {/* 1. Breadcrumb navigation & Copy link */}
+      <div className="flex items-center justify-between px-1 text-xs font-normal text-slate-500">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/recognize"
+            className="flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            <Icon icon="solar:arrow-left-linear" className="h-3.5 w-3.5" />
+            <span>Detektor</span>
+          </Link>
+          <span>/</span>
+          <span className="text-slate-400">Pemeriksaan nomor telepon</span>
         </div>
 
-        {scan.isScanning && <div aria-live="polite" className="flex items-center gap-2 py-2 text-xs font-normal text-slate-600"><Icon icon="solar:restart-bold-duotone" className="h-3.5 w-3.5 animate-spin text-red-600" /><span>{scan.scanStep || "Memeriksa nomor..."}</span></div>}
-        {scan.errorMessage && !scan.isScanning && <p role="alert" className="py-1 text-left text-xs font-normal text-red-600">{scan.errorMessage}</p>}
-        {shown && !scan.isScanning && <ScanResultPanel result={shown} resetLabel="Periksa nomor lain" onReset={() => { setTerm(""); setProblem(""); searchRef.current?.focus(); }} footer={<PhoneReportForm number={canonical} />} />}
+        <button
+          type="button"
+          onClick={handleCopyLink}
+          className="inline-flex items-center gap-1.5 text-xs font-normal text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <Icon
+            icon={copied ? "solar:check-circle-linear" : "solar:copy-linear"}
+            className={`h-3.5 w-3.5 ${copied ? "text-[#34C759]" : "text-slate-400"}`}
+          />
+          <span>{copied ? "Tautan tersalin" : "Salin tautan"}</span>
+        </button>
+      </div>
 
-        <form onSubmit={search} className="mt-3.5 border-t border-gray-100 pt-3">
-          <div className="flex w-full gap-2">
-            <span aria-hidden="true" className="flex items-center rounded-xl border border-gray-200 bg-slate-50 px-3 text-sm font-medium text-slate-600">+62</span>
-            <input ref={searchRef} type="tel" aria-label="Cari nomor Indonesia lain" value={term}
-              onChange={(event) => { setTerm(event.target.value); setProblem(""); }} placeholder="Cari nomor lain..."
-              className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-transparent px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20" />
-            <button type="submit" aria-label="Cari nomor" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-slate-900/20 active:scale-95 sm:h-10 sm:w-10"><Icon icon="solar:magnifer-linear" className="h-5 w-5" /></button>
+      {/* 2. Target Phone Header (Outside before the card) */}
+      <div className="px-1 pt-1 text-left">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
+          <div className="flex items-center gap-3.5 min-w-0 text-left">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-700">
+              <Icon icon="solar:phone-bold-duotone" className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1 text-left">
+              <div className="break-all text-xl sm:text-2xl font-normal text-slate-900 font-mono tracking-tight text-left">
+                {formatDisplayPhone(canonical) || canonical}
+              </div>
+              <p className="text-xs font-normal text-slate-400 mt-0.5 text-left">
+                Nomor Indonesia · Format E.164: +{slug}
+              </p>
+            </div>
           </div>
-          {problem && <p role="alert" className="mt-1 text-left text-xs font-normal text-red-600">{problem}</p>}
-        </form>
+
+          <span className="text-xs font-normal text-slate-500 shrink-0 text-left sm:text-right">
+            Basis data komunitas aktif
+          </span>
+        </div>
+      </div>
+
+      {/* 3. Section Title (H2 text-left on the left, matching card left edge, NO sub-headline) */}
+      <div className="px-1 pt-1 text-left">
+        <h2 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight text-left">
+          Hasil evaluasi risiko
+        </h2>
+      </div>
+
+      {/* 4. THE SINGLE UNIFIED RESULT CARD */}
+      <div className="w-full rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-2xs space-y-4 text-left">
+        {/* Loading State */}
+        {scan.isScanning && (
+          <div
+            aria-live="polite"
+            className="py-8 flex flex-col items-center justify-center text-center space-y-2"
+          >
+            <Icon
+              icon="solar:restart-linear"
+              className="h-5 w-5 animate-spin text-slate-500"
+            />
+            <p className="text-xs font-normal text-slate-600">
+              {scan.scanStep || "Memeriksa basis data intelijen penipuan..."}
+            </p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {scan.errorMessage && !scan.isScanning && (
+          <ErrorToast
+            title="Pemeriksaan nomor tidak dapat diproses"
+            description={scan.errorMessage}
+          />
+        )}
+
+        {/* Forensic Report Panel */}
+        {shown && !scan.isScanning && (
+          <ScanResultPanel
+            result={shown}
+            resetLabel="Periksa nomor lain"
+            onReset={handleReset}
+            footer={<PhoneReportForm number={canonical} />}
+          />
+        )}
       </div>
     </div>
   );

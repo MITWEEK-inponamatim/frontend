@@ -1,12 +1,44 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { canonicalPhone, isPlausibleIndonesianNumber } from "@/lib/phone";
 
 export type ScanTab = "url" | "phone" | "application";
 export type CommunityReview = { id: string; category: string; status: string; age_days: number | null; evidence_url?: string | null };
-export type ScanResult = { outcome: string; risk: { level: string; confidence: string; coverage?: { summary?: string; checks_run?: string[]; checks_unavailable?: string[] } }; findings: { id: string; indicator: string; severity: string }[]; evidence_summary: string; recommended_actions: string[]; limitations: string[]; artifacts?: { community_reviews?: CommunityReview[]; community_review_count?: number }; error?: { code: string; message: string } | null };
+
+export type Finding = {
+  id?: string;
+  indicator: string;
+  source?: string;
+  severity: string;
+  confidence?: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type ScanArtifacts = {
+  community_reviews?: CommunityReview[];
+  community_review_count?: number;
+  redirect_chain?: (string | { url: string; status?: number })[];
+  screenshot_path?: string | null;
+  screenshot_url?: string | null;
+  [key: string]: unknown;
+};
+
+export type ScanResult = {
+  outcome: string;
+  risk: {
+    level: string;
+    confidence: string;
+    score?: number | null;
+    coverage?: { summary?: string; checks_run?: string[]; checks_unavailable?: string[] };
+  };
+  findings: Finding[];
+  evidence_summary: string;
+  recommended_actions: string[];
+  limitations: string[];
+  artifacts?: ScanArtifacts;
+  error?: { code: string; message: string } | null;
+};
 
 const ERROR_MESSAGES: Record<string, string> = {
   invalid_request: "Permintaan tidak valid. Muat ulang halaman lalu coba lagi.",
@@ -41,38 +73,63 @@ export function messageForError(code: string | undefined | null): string {
 }
 
 export function useScanner() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<ScanTab>("url"); const [input, setInput] = useState(""); const [number, setNumber] = useState(""); const [file, setFile] = useState<File | null>(null); const [consent, setConsent] = useState(false);
-  const [isScanning, setIsScanning] = useState(false); const [scanStep, setScanStep] = useState(""); const [errorMessage, setErrorMessage] = useState<string | null>(null); const [result, setResult] = useState<ScanResult | null>(null);
+  const [activeTab, setActiveTab] = useState<ScanTab>("url");
+  const [input, setInput] = useState("");
+  const [number, setNumber] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [consent, setConsent] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanStep, setScanStep] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [result, setResult] = useState<ScanResult | null>(null);
   const [scanId, setScanId] = useState("");
-  // Which kind of check the current scanId belongs to. A ref because the poll reads it once, when
-  // the verdict arrives, and nothing on screen is derived from it.
+  const [completedScanId, setCompletedScanId] = useState<string | null>(null);
   const runningKind = useRef<ScanTab>("url");
-  const resetScan = useCallback(() => { setResult(null); setErrorMessage(null); setScanId(""); setIsScanning(false); setScanStep(""); }, []);
+
+  const resetScan = useCallback(() => {
+    setResult(null);
+    setErrorMessage(null);
+    setScanId("");
+    setCompletedScanId(null);
+    setIsScanning(false);
+    setScanStep("");
+  }, []);
+
   useEffect(() => {
     if (!scanId) return;
     let live = true;
     const poll = async () => {
       try {
-        const response = await api(`/api/v1/scans/${scanId}`, { headers: { "X-Activity": "passive" } });
+        const response = await api(`/api/v1/scans/${scanId}`, {
+          headers: { "X-Activity": "passive" },
+        });
         if (!live) return;
         if (response.status === "completed" || response.status === "failed") {
-          setResult(response.report); setIsScanning(false); setScanStep(""); setScanId("");
-          // A finished link or APK check moves to its own address, which is what the history list
-          // then points at. The phone verdict keeps going to its number page instead.
-          if (runningKind.current === "url") router.push(`/recognize/url/${scanId}`);
-          if (runningKind.current === "application") router.push(`/recognize/apk/${scanId}`);
+          setResult(response.report);
+          setCompletedScanId(scanId);
+          setIsScanning(false);
+          setScanStep("");
+          setScanId("");
           return;
         }
-        setScanStep("Menganalisis bukti..."); setTimeout(poll, 2000);
+        setScanStep("Menganalisis bukti...");
+        setTimeout(poll, 2000);
       } catch (error) {
         if (!live) return;
-        setErrorMessage(messageForError(error instanceof Error ? error.message : null)); setIsScanning(false); setScanId(""); setScanStep("");
+        setErrorMessage(
+          messageForError(error instanceof Error ? error.message : null),
+        );
+        setIsScanning(false);
+        setScanId("");
+        setScanStep("");
       }
     };
     const timer = setTimeout(poll, 1000);
-    return () => { live = false; clearTimeout(timer); };
-  }, [scanId, router]);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [scanId]);
   const submit = useCallback(async (tab: ScanTab, value: string) => {
     setErrorMessage(null); setResult(null);
     if (tab === "url" && !value.trim()) { setErrorMessage("Masukkan tautan yang ingin dipindai."); return; }
@@ -101,5 +158,24 @@ export function useScanner() {
   // how both that box and the result page kick it off.
   const runScan = useCallback(() => submit(activeTab, input), [submit, activeTab, input]);
   const startPhoneScan = useCallback((value: string) => { setNumber(value); void submit("phone", value); }, [submit]);
-  return { activeTab, setActiveTab, input, setInput, number, setNumber, file, setFile, consent, setConsent, isScanning, scanStep, errorMessage, result, runScan, startPhoneScan, resetScan };
+  return {
+    activeTab,
+    setActiveTab,
+    input,
+    setInput,
+    number,
+    setNumber,
+    file,
+    setFile,
+    consent,
+    setConsent,
+    isScanning,
+    scanStep,
+    errorMessage,
+    result,
+    completedScanId,
+    runScan,
+    startPhoneScan,
+    resetScan,
+  };
 }

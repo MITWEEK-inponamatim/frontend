@@ -1,28 +1,49 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
+import { ErrorToast } from "@/components/ui/Toast";
 import { useScanner, type ScanTab } from "@/hooks/useScanner";
 import { ScanResultPanel } from "@/components/recognize/ScanResultPanel";
+import { PhoneReportForm } from "@/components/recognize/PhoneReportForm";
 import { rememberPhoneResult } from "@/lib/phoneHandoff";
-import { phoneInputProblem, phoneSlug } from "@/lib/phone";
+import { canonicalPhone, formatDisplayPhone, phoneInputProblem, phoneSlug } from "@/lib/phone";
 
-const tabs: { id: ScanTab; label: string; icon: string }[] = [
-  { id: "url", label: "Tautan", icon: "solar:link-circle-bold-duotone" },
-  { id: "phone", label: "Telepon", icon: "solar:phone-bold-duotone" },
-  { id: "application", label: "Berkas APK", icon: "solar:document-bold-duotone" },
+const TABS: { id: ScanTab; label: string; icon: string; subtitle: string }[] = [
+  {
+    id: "url",
+    label: "Tautan URL",
+    icon: "solar:link-circle-bold-duotone",
+    subtitle: "Analisis phishing & redirect",
+  },
+  {
+    id: "application",
+    label: "Berkas APK",
+    icon: "solar:document-bold-duotone",
+    subtitle: "Dekomplikasi & izin Android",
+  },
+  {
+    id: "phone",
+    label: "Nomor Telepon",
+    icon: "solar:phone-bold-duotone",
+    subtitle: "Reputasi & laporan warga",
+  },
 ];
 
 const MAX_APK_MB = 50;
 
+/**
+ * Reconstructed Apple HIG Scanner Hub Component:
+ * Clean, minimal interface for scanning suspicious URLs, Android APK packages,
+ * and Indonesian phone numbers with inline results (Option A: zero jarring page redirect),
+ * seamless shallow permalink URL synchronization, drag-and-drop feedback, byte counters,
+ * and progressive analysis telemetry states.
+ */
 export function RecognizeCard() {
   const scan = useScanner();
-  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [searchProblem, setSearchProblem] = useState("");
-  const awaitingPhone = useRef(false);
 
   const switchTab = (tab: ScanTab) => {
     if (scan.isScanning) return;
@@ -30,6 +51,7 @@ export function RecognizeCard() {
     scan.resetScan();
     setSearchProblem("");
   };
+
   const selectFile = (file: File | null) => {
     if (file && file.size > MAX_APK_MB * 1048576) {
       scan.setFile(null);
@@ -37,87 +59,385 @@ export function RecognizeCard() {
     }
     scan.setFile(file);
   };
-  // A number is searched here and answered at its own address, so the result can be shared,
-  // bookmarked, and reached again without re-typing. The wait stays on this page: the verdict is
-  // scanned now, and the address only changes once there is something to show at it.
+
   const searchNumber = (event: React.FormEvent) => {
     event.preventDefault();
     const problem = phoneInputProblem(scan.number);
     setSearchProblem(problem);
     if (problem || scan.isScanning) return;
-    awaitingPhone.current = true;
     scan.startPhoneScan(scan.number);
   };
 
-  // A ref, not state: this only decides whether an incoming scan result means "leave now", and
-  // putting it in state would make the effect itself the thing that changes what it reads.
+  // Sync address bar shallowly without trigger page unmount/remount
   useEffect(() => {
-    if (!awaitingPhone.current) return;
-    if (scan.errorMessage) {
-      awaitingPhone.current = false;
-      return;
-    }
     if (!scan.result) return;
-    const slug = phoneSlug(scan.number);
-    rememberPhoneResult(slug, scan.result);
-    awaitingPhone.current = false;
-    router.push(`/recognize/phone/${slug}`);
-  }, [scan.errorMessage, scan.result, scan.number, router]);
+    if (typeof window !== "undefined") {
+      if (scan.activeTab === "phone" && scan.number) {
+        const slug = phoneSlug(scan.number);
+        rememberPhoneResult(slug, scan.result);
+        window.history.replaceState(null, "", `/recognize/phone/${slug}`);
+      } else if (scan.activeTab === "url" && scan.completedScanId) {
+        window.history.replaceState(null, "", `/recognize/url/${scan.completedScanId}`);
+      } else if (scan.activeTab === "application" && scan.completedScanId) {
+        window.history.replaceState(null, "", `/recognize/apk/${scan.completedScanId}`);
+      }
+    }
+  }, [scan.result, scan.activeTab, scan.number, scan.completedScanId]);
+
+  const handleReset = () => {
+    scan.resetScan();
+    setSearchProblem("");
+    if (typeof window !== "undefined" && window.location.pathname !== "/recognize") {
+      window.history.replaceState(null, "", "/recognize");
+    }
+  };
+
+  const isShowingResult = Boolean(scan.result && !scan.isScanning);
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col items-center">
-      <div className="mb-3 flex flex-wrap items-center justify-center gap-2 sm:mb-4">
-        {tabs.map((tab) => (
-          <button key={tab.id} type="button" onClick={() => switchTab(tab.id)}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs transition-all ${scan.activeTab === tab.id ? "border-slate-900 bg-slate-900 font-medium text-white shadow-sm" : "border-gray-200/90 bg-white font-normal text-slate-600 hover:border-gray-300 hover:text-slate-900"}`}>
-            <Icon icon={tab.icon} className="h-3.5 w-3.5 opacity-80" /><span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
+    <div
+      className={`mx-auto flex w-full flex-col items-center space-y-4 transition-all duration-200 ${
+        isShowingResult ? "max-w-3xl lg:max-w-4xl" : "max-w-2xl"
+      }`}
+    >
+      {/* 1. Header before card when showing result */}
+      {isShowingResult ? (
+        <div className="w-full space-y-3 px-1">
+          <div className="flex items-center justify-between text-xs font-normal text-slate-500">
+            <span>
+              Laporan hasil pemindaian ({TABS.find((t) => t.id === scan.activeTab)?.label ?? "Analisis"})
+            </span>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="text-xs font-normal text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              ← Periksa target lain
+            </button>
+          </div>
 
-      <div className="relative w-full rounded-2xl border border-gray-200/90 bg-white p-4 shadow-sm transition-all hover:shadow-md sm:rounded-3xl sm:p-5">
-        {scan.activeTab === "phone" ? (
-          <form onSubmit={searchNumber} className="flex min-h-[110px] flex-col justify-between">
-            <div className="flex w-full gap-2 py-2">
-              <span aria-hidden="true" className="flex items-center rounded-xl border border-gray-200 bg-slate-50 px-3 text-sm font-medium text-slate-600">+62</span>
-              <input type="tel" aria-label="Nomor telepon Indonesia" value={scan.number} disabled={scan.isScanning}
-                onChange={(event) => { scan.setNumber(event.target.value); setSearchProblem(""); }}
-                placeholder="08xx xxxx xxxx" className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-transparent px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20" />
+          <div className="flex items-start gap-3.5 pt-1">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-900 text-white shadow-2xs">
+              <Icon
+                icon={
+                  scan.activeTab === "phone"
+                    ? "solar:phone-bold-duotone"
+                    : scan.activeTab === "url"
+                      ? "solar:link-bold-duotone"
+                      : "solar:shield-warning-bold-duotone"
+                }
+                className="h-5 w-5"
+              />
             </div>
-            <p className="text-[11px] leading-relaxed text-slate-400">Hasil pemeriksaan nomor tampil di halaman sendiri, lengkap dengan laporan warga dan bukti gambarnya.</p>
-            {(searchProblem || scan.errorMessage) && <p role="alert" className="py-1 text-left text-xs font-normal text-red-600">{searchProblem || scan.errorMessage}</p>}
-            {scan.isScanning && <div aria-live="polite" className="flex items-center gap-2 py-1 text-xs font-normal text-slate-600"><Icon icon="solar:restart-bold-duotone" className="h-3.5 w-3.5 animate-spin text-red-600" /><span>{scan.scanStep || "Memeriksa nomor..."}</span></div>}
-            <div className="mt-1 flex items-center justify-between border-t border-gray-100 pt-3">
-              <div className="flex items-center gap-1">{tabs.map((tab) => <button key={tab.id} type="button" title={tab.label} aria-label={tab.label} onClick={() => switchTab(tab.id)} className={`rounded-full p-2 transition-colors ${scan.activeTab === tab.id ? "bg-slate-100 text-slate-800" : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"}`}><Icon icon={tab.icon} className="h-4 w-4" /></button>)}</div>
-              <button type="submit" disabled={scan.isScanning} aria-label="Cari nomor" className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-slate-900/20 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 sm:h-10 sm:w-10">{scan.isScanning ? <Icon icon="solar:restart-bold-duotone" className="h-4 w-4 animate-spin" /> : <Icon icon="solar:magnifer-linear" className="h-5 w-5" />}</button>
+            <div className="min-w-0 flex-1">
+              <div className="break-all text-xl sm:text-2xl font-normal text-slate-900 font-mono tracking-tight leading-snug">
+                {scan.activeTab === "phone"
+                  ? (scan.number ? (formatDisplayPhone(scan.number) || canonicalPhone(scan.number)) : "Nomor telepon")
+                  : scan.activeTab === "url"
+                    ? (scan.input || "Tautan URL")
+                    : (scan.file?.name || "Berkas APK")}
+              </div>
+              <p className="text-xs font-normal text-slate-400 mt-0.5">
+                {scan.activeTab === "phone"
+                  ? `Nomor Indonesia · Format E.164: +${canonicalPhone(scan.number).replace(/[^0-9]/g, "")}`
+                  : scan.activeTab === "url"
+                    ? "Inspeksi headless Playwright sandbox"
+                    : "Dekomplikasi Androguard sandbox"}
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-1 text-left">
+            <h2 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight text-left">
+              Hasil evaluasi risiko
+            </h2>
+          </div>
+        </div>
+      ) : (
+        /* Segmented control when searching */
+        <div className="inline-flex p-1 rounded-2xl bg-slate-100/90 border border-slate-200/80 shadow-2xs">
+          {TABS.map((tab) => {
+            const isActive = scan.activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => switchTab(tab.id)}
+                disabled={scan.isScanning}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-normal transition-all ${
+                  isActive
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
+                }`}
+              >
+                <Icon
+                  icon={tab.icon}
+                  className={`h-4 w-4 ${isActive ? "text-[#007AFF]" : "text-slate-400"}`}
+                />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 2. Main Inset Grouped Scanning Container */}
+      <div className="w-full rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-2xs transition-all">
+        {scan.result ? (
+          /* Option A: Inline Result Panel directly in-place */
+          <ScanResultPanel
+            result={scan.result}
+            resetLabel="Periksa data baru"
+            onReset={handleReset}
+            footer={
+              scan.activeTab === "phone" && scan.number && canonicalPhone(scan.number) ? (
+                <PhoneReportForm number={canonicalPhone(scan.number)} />
+              ) : undefined
+            }
+          />
+        ) : scan.activeTab === "phone" ? (
+          /* Phone Search Tab */
+          <form onSubmit={searchNumber} className="flex min-h-[140px] flex-col justify-between space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs font-normal text-slate-500">
+                <span>Masukkan nomor telepon Indonesia:</span>
+                <span className="text-[11px] text-slate-400">Format E.164 (+62)</span>
+              </div>
+              <div className="flex w-full gap-2">
+                <span
+                  aria-hidden="true"
+                  className="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs font-normal text-slate-600 font-mono"
+                >
+                  +62
+                </span>
+                <input
+                  type="tel"
+                  aria-label="Nomor telepon Indonesia"
+                  value={scan.number}
+                  disabled={scan.isScanning}
+                  onChange={(event) => {
+                    scan.setNumber(event.target.value);
+                    setSearchProblem("");
+                  }}
+                  placeholder="812 3456 7890"
+                  className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-transparent px-3.5 py-2.5 text-sm font-normal text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/15 font-mono"
+                />
+              </div>
+              <p className="text-[11px] font-normal leading-relaxed text-slate-400">
+                Pemeriksaan nomor mencakup riwayat nomor penipuan, laporan warga terverifikasi, dan telemetri rekayasa sosial.
+              </p>
+            </div>
+
+            {(searchProblem || scan.errorMessage) && (
+              <ErrorToast
+                title="Pemeriksaan tidak dapat diproses"
+                description={searchProblem || scan.errorMessage || ""}
+              />
+            )}
+
+            {scan.isScanning && (
+              <div
+                aria-live="polite"
+                className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200/80 p-3 text-xs font-normal text-slate-600"
+              >
+                <Icon icon="solar:restart-bold-duotone" className="h-4 w-4 animate-spin text-[#007AFF]" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-slate-900">{scan.scanStep || "Memeriksa basis data intelijen penipuan..."}</p>
+                  <p className="text-[10px] text-slate-400">Menghubungkan ke layanan verifikasi telepon</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3.5">
+              <span className="text-[11px] font-normal text-slate-400">
+                Hasil langsung tampil di tempat secara instan
+              </span>
+              <button
+                type="submit"
+                disabled={scan.isScanning || !scan.number.trim()}
+                aria-label="Cari nomor"
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-normal text-white transition-all hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 active:scale-95 shadow-2xs"
+              >
+                {scan.isScanning ? (
+                  <>
+                    <Icon icon="solar:restart-bold-duotone" className="h-4 w-4 animate-spin" />
+                    <span>Memeriksa...</span>
+                  </>
+                ) : (
+                  <>
+                    <Icon icon="solar:magnifer-linear" className="h-4 w-4" />
+                    <span>Periksa nomor</span>
+                  </>
+                )}
+              </button>
             </div>
           </form>
-        ) : scan.result ? (
-          <ScanResultPanel result={scan.result} resetLabel="Periksa data baru" onReset={scan.resetScan} />
         ) : (
-          <div className="flex min-h-[110px] flex-col justify-between">
-            {scan.activeTab === "url" && <div className="w-full">
-              <textarea rows={3} aria-label="Tautan" value={scan.input} onChange={(event) => scan.setInput(event.target.value)} disabled={scan.isScanning}
-                placeholder="Tempel tautan yang ingin diperiksa..."
-                className="w-full resize-none border-0 bg-transparent text-sm font-normal leading-relaxed text-slate-900 placeholder:text-slate-400 focus:outline-none sm:text-base" />
-            </div>}
+          /* URL or APK Scan Tab */
+          <div className="flex min-h-[140px] flex-col justify-between space-y-4">
+            {scan.activeTab === "url" && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-normal text-slate-500">
+                  <span>Alamat URL situs yang ingin diperiksa:</span>
+                  <span className="text-[11px] text-slate-400">Playwright Egress Sandbox</span>
+                </div>
+                <textarea
+                  rows={3}
+                  aria-label="Tautan URL"
+                  value={scan.input}
+                  onChange={(event) => scan.setInput(event.target.value)}
+                  disabled={scan.isScanning}
+                  placeholder="Tempel tautan lengkap yang mencurigakan (contoh: https://undian-kupon-belanja.xyz/klaim)..."
+                  className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50/30 p-3 text-xs sm:text-sm font-normal text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:bg-white transition-all"
+                />
+                <p className="text-[11px] font-normal leading-relaxed text-slate-400">
+                  Browser terisolasi akan mendokumentasikan rantai redirect, memeriksa form pencuri kredensial, dan mengambil bukti screenshot secara terlindungi.
+                </p>
+              </div>
+            )}
 
-            {scan.activeTab === "application" && <div className="w-full py-2">
-              <input ref={fileRef} type="file" accept=".apk,application/vnd.android.package-archive" className="hidden" onChange={(event) => selectFile(event.target.files?.[0] ?? null)} />
-              {!scan.file ? <div role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") fileRef.current?.click(); }} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); selectFile(event.dataTransfer.files?.[0] ?? null); }} onClick={() => fileRef.current?.click()} className={`cursor-pointer rounded-2xl border border-dashed p-6 text-center transition-all ${dragging ? "border-red-500 bg-red-50/40" : "border-gray-200 bg-slate-50/40 hover:border-gray-300 hover:bg-slate-50/80"}`}>
-                <Icon icon="solar:upload-track-2-bold-duotone" className="mx-auto mb-2 h-7 w-7 text-slate-400" /><p className="text-xs font-normal text-slate-700 sm:text-sm">Pilih atau seret berkas APK ke sini</p><p className="mt-0.5 text-[11px] text-slate-400">APK · maks. {MAX_APK_MB} MB</p>
-              </div> : <div className="flex items-center justify-between rounded-2xl border border-gray-200/80 bg-slate-50 p-3">
-                <div className="flex min-w-0 items-center gap-3"><Icon icon="solar:document-bold-duotone" className="h-8 w-8 shrink-0 text-slate-500" /><div className="min-w-0"><p className="truncate text-xs text-slate-900 sm:text-sm">{scan.file.name}</p><p className="text-[11px] text-slate-400">{(scan.file.size / 1048576).toFixed(2)} MB</p></div></div>
-                <button type="button" onClick={() => selectFile(null)} aria-label="Hapus berkas" className="rounded-lg p-1.5 text-slate-400 hover:text-red-600"><Icon icon="solar:trash-bin-trash-bold-duotone" className="h-4 w-4" /></button>
-              </div>}
-              <label className="mt-3 flex items-start gap-2 text-xs text-slate-600"><input type="checkbox" checked={scan.consent} onChange={(event) => scan.setConsent(event.target.checked)} className="mt-0.5" />Setuju mengirim sampel APK ke layanan pemindai eksternal (VirusTotal) untuk analisis tambahan. Tanpa persetujuan, hanya hash berkas yang diperiksa.</label>
-            </div>}
+            {scan.activeTab === "application" && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs font-normal text-slate-500">
+                  <span>Unggah paket berkas Android (.apk):</span>
+                  <span className="text-[11px] text-slate-400">Dekomplikasi Androguard & YARA</span>
+                </div>
 
-            {scan.errorMessage && <p role="alert" className="py-1 text-left text-xs font-normal text-red-600">{scan.errorMessage}</p>}
-            {scan.isScanning && <div aria-live="polite" className="flex items-center gap-2 py-2 text-xs font-normal text-slate-600"><Icon icon="solar:restart-bold-duotone" className="h-3.5 w-3.5 animate-spin text-red-600" /><span>{scan.scanStep}</span></div>}
-            <div className="mt-1 flex items-center justify-between border-t border-gray-100 pt-3">
-              <div className="flex items-center gap-1">{tabs.map((tab) => <button key={tab.id} type="button" title={tab.label} aria-label={tab.label} onClick={() => switchTab(tab.id)} className={`rounded-full p-2 transition-colors ${scan.activeTab === tab.id ? "bg-slate-100 text-slate-800" : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"}`}><Icon icon={tab.icon} className="h-4 w-4" /></button>)}</div>
-              <button type="button" onClick={scan.runScan} disabled={scan.isScanning} aria-label="Pindai data" className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-slate-900/20 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 sm:h-10 sm:w-10">{scan.isScanning ? <Icon icon="solar:restart-bold-duotone" className="h-4 w-4 animate-spin" /> : <Icon icon="solar:arrow-up-linear" className="h-5 w-5 stroke-[2.5]" />}</button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".apk,application/vnd.android.package-archive"
+                  className="hidden"
+                  onChange={(event) => selectFile(event.target.files?.[0] ?? null)}
+                />
+
+                {!scan.file ? (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") fileRef.current?.click();
+                    }}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setDragging(true);
+                    }}
+                    onDragLeave={() => setDragging(false)}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      setDragging(false);
+                      selectFile(event.dataTransfer.files?.[0] ?? null);
+                    }}
+                    onClick={() => fileRef.current?.click()}
+                    className={`cursor-pointer rounded-2xl border border-dashed p-6 text-center transition-all ${
+                      dragging
+                        ? "border-[#007AFF] bg-blue-50/40 text-blue-900"
+                        : "border-slate-200/90 bg-slate-50/40 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="mx-auto mb-2.5 grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-200/70 text-slate-500 shadow-2xs">
+                      <Icon icon="solar:upload-track-2-bold-duotone" className="h-5 w-5 text-slate-600" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-normal text-slate-800">
+                      Pilih atau seret berkas APK Android ke sini
+                    </p>
+                    <p className="mt-1 text-[11px] font-normal text-slate-400">
+                      Format <span className="font-mono">.apk</span> · Ukuran maksimum {MAX_APK_MB} MB
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 shadow-2xs">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white border border-slate-200 text-slate-600">
+                        <Icon icon="solar:document-bold-duotone" className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs sm:text-sm font-normal text-slate-900 font-mono">
+                          {scan.file.name}
+                        </p>
+                        <p className="text-[11px] font-normal text-slate-400">
+                          {(scan.file.size / 1048576).toFixed(2)} MB / {MAX_APK_MB} MB
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => selectFile(null)}
+                      aria-label="Hapus berkas"
+                      className="rounded-xl p-2 text-slate-400 hover:text-[#FF3B30] hover:bg-red-50/50 transition-colors"
+                    >
+                      <Icon icon="solar:trash-bin-trash-bold-duotone" className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Consent checkbox */}
+                <label className="flex items-start gap-2.5 rounded-xl border border-slate-100 bg-slate-50/50 p-2.5 text-[11px] font-normal leading-relaxed text-slate-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={scan.consent}
+                    onChange={(event) => scan.setConsent(event.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-0"
+                  />
+                  <span>
+                    Setuju mengirim sampel APK ke layanan pemindai multi-mesin eksternal (VirusTotal) untuk analisis tambahan. Tanpa persetujuan, hanya dekompilasi lokal Androguard & hash berkas yang dianalisis.
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {(searchProblem || scan.errorMessage) && (
+              <ErrorToast
+                title="Pemeriksaan tidak dapat diproses"
+                description={searchProblem || scan.errorMessage || ""}
+              />
+            )}
+
+            {scan.isScanning && (
+              <div
+                aria-live="polite"
+                className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200/80 p-3 text-xs font-normal text-slate-600"
+              >
+                <Icon icon="solar:restart-bold-duotone" className="h-4 w-4 animate-spin text-[#007AFF]" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-slate-900">{scan.scanStep || "Menganalisis indikator forensik..."}</p>
+                  <p className="text-[10px] text-slate-400">Proses pemindaian terisolasi berjalan di lingkungan aman</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3.5">
+              <span className="text-[11px] font-normal text-slate-400">
+                {scan.activeTab === "url"
+                  ? "Inspeksi headless anti-SSRF & DNS pinned"
+                  : "Dekomplikasi non-root sandbox"}
+              </span>
+
+              <button
+                type="button"
+                onClick={scan.runScan}
+                disabled={
+                  scan.isScanning ||
+                  (scan.activeTab === "url" && !scan.input.trim()) ||
+                  (scan.activeTab === "application" && !scan.file)
+                }
+                aria-label="Mulai pemindaian"
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-normal text-white transition-all hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 active:scale-95 shadow-2xs"
+              >
+                {scan.isScanning ? (
+                  <>
+                    <Icon icon="solar:restart-bold-duotone" className="h-4 w-4 animate-spin" />
+                    <span>Menganalisis...</span>
+                  </>
+                ) : (
+                  <>
+                    <Icon icon="solar:shield-check-linear" className="h-4 w-4" />
+                    <span>
+                      {scan.activeTab === "url" ? "Pindai tautan" : "Pindai berkas APK"}
+                    </span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         )}

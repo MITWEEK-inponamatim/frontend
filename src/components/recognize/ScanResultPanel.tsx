@@ -1,75 +1,296 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
+import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
-import { scanOutcomeLabel } from "@/lib/scanRecord";
+import { ErrorToast } from "@/components/ui/Toast";
 import type { ScanResult } from "@/hooks/useScanner";
+import { RedirectChainViewer } from "./RedirectChainViewer";
+import { BrowserScreenshotViewer } from "./BrowserScreenshotViewer";
+import { ApkPermissionsViewer } from "./ApkPermissionsViewer";
+
+const DEFAULT_RECOMMENDATIONS = [
+  "Jangan pernah membagikan kode OTP, PIN, kata sandi, atau data perbankan kepada penelepon atau pengirim pesan.",
+  "Waspadai pesan atau panggilan yang mendesak Anda mengambil keputusan keuangan secara tergesa-gesa.",
+  "Laporkan nomor, tautan, atau berkas mencurigakan ke komunitas agar warga lain terlindungi.",
+];
 
 /**
- * The verdict block, shared by /recognize (tautan dan APK), the per-scan result pages, and
- * /recognize/phone/[nomor].
+ * Editorial security audit verdict panel:
+ * Authoritative, linear forensic presentation of evidence, artifacts, and actionable recommendations
+ * unified in a single surface with bold section headers, text-left alignment, and clean highlight pills.
  *
- * One copy exists because two copies drift: every one of those surfaces has to describe the same
- * risk level, the same findings, and the same coverage gap in the same words. The outcome label
- * comes from lib/scanRecord.ts for the same reason — the history list names the verdict with it.
+ * @param result - Structured scan verdict from Go API or Python analysis engine.
+ * @param resetLabel - Label for the primary reset or action button.
+ * @param onReset - Callback to reset scanner state or navigate back.
+ * @param footer - Optional contextual footer elements such as a reporting form.
  */
-export function ScanResultPanel({ result, resetLabel, onReset, footer }: {
+export function ScanResultPanel({
+  result,
+  resetLabel,
+  onReset,
+  footer,
+}: {
   result: ScanResult;
   resetLabel: string;
   onReset: () => void;
   footer?: ReactNode;
 }) {
-  const tone = result.risk?.level === "high" ? "red" : result.risk?.level === "medium" ? "amber" : "slate";
+  const riskLevel = result.risk?.level ?? "unknown";
+  const outcome = result.outcome ?? "";
+  const isFailed = outcome === "scan_failed" || Boolean(result.error);
+  const isHighRisk = riskLevel === "high";
+  const isMediumRisk = riskLevel === "medium";
+  const isSafe = riskLevel === "low";
+
+  if (isFailed) {
+    return (
+      <div className="w-full space-y-4 animate-in fade-in duration-150 text-left">
+        <ErrorToast
+          title="Pemindaian belum dapat diselesaikan"
+          description={
+            result.error?.message ||
+            result.risk?.coverage?.summary ||
+            "Layanan analisis tidak dapat menjangkau server target saat ini. Pastikan koneksi atau service pendukung telah aktif, lalu coba ulangi."
+          }
+        />
+        <div className="flex items-center justify-between pt-1 text-xs font-normal">
+          <span className="text-slate-400">Status: Pemeriksaan belum selesai</span>
+          <button
+            type="button"
+            onClick={onReset}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
+          >
+            <Icon icon="solar:restart-linear" className="h-3.5 w-3.5 text-slate-500" />
+            <span>{resetLabel || "Pindai ulang"}</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const reviews = result.artifacts?.community_reviews ?? [];
+  const redirectChain = result.artifacts?.redirect_chain ?? [];
+  const screenshotUrl =
+    result.artifacts?.screenshot_url ?? result.artifacts?.screenshot_path ?? null;
+
+  const extractedPermissions: string[] = [];
+  result.findings?.forEach((f) => {
+    if (f.indicator.includes("android.permission.")) {
+      const match = f.indicator.match(/android\.permission\.[A-Z_]+/g);
+      if (match) extractedPermissions.push(...match);
+    }
+  });
+
+  const recommendations =
+    result.recommended_actions && result.recommended_actions.length > 0
+      ? result.recommended_actions
+      : DEFAULT_RECOMMENDATIONS;
 
   return (
-    <div className="animate-in fade-in duration-150">
-      <div className={`rounded-2xl border p-4 sm:p-5 ${tone === "red" ? "border-red-200 bg-red-50/50 text-red-950" : tone === "amber" ? "border-amber-200 bg-amber-50/50 text-amber-950" : "border-slate-200 bg-slate-50/70 text-slate-950"}`}>
-        <div className="mb-3 flex items-start justify-between gap-3">
+    <div className="w-full space-y-4 animate-in fade-in duration-150 text-left">
+      {/* 1. Verdict & System Confidence (End-to-End layout with Highlight Badges) */}
+      <div className="space-y-2 text-left">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
+          {/* Vonis with Highlight Pill */}
           <div className="flex items-center gap-2.5">
-            <span className={`rounded-xl p-2 text-white ${tone === "red" ? "bg-red-600" : tone === "amber" ? "bg-amber-600" : "bg-slate-700"}`}>
-              <Icon icon={tone === "red" ? "solar:shield-warning-bold-duotone" : tone === "amber" ? "solar:danger-triangle-bold-duotone" : "solar:shield-check-bold-duotone"} className="h-5 w-5" />
+            <span className="text-sm font-normal text-slate-600">Vonis:</span>
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                isHighRisk
+                  ? "bg-red-50 text-[#FF3B30] border border-red-200/60"
+                  : isMediumRisk
+                    ? "bg-amber-50 text-[#FF9500] border border-amber-200/60"
+                    : isSafe
+                      ? "bg-emerald-50 text-[#34C759] border border-emerald-200/60"
+                      : "bg-slate-100 text-slate-700 border border-slate-200/60"
+              }`}
+            >
+              {isHighRisk
+                ? "Bahaya — ancaman terkonfirmasi"
+                : isMediumRisk
+                  ? "Peringatan — pola mencurigakan"
+                  : isSafe
+                    ? "Bersih — tidak ditemukan indikasi bahaya"
+                    : "Bukti belum cukup"}
             </span>
-            <div>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${tone === "red" ? "bg-red-200/70 text-red-800" : tone === "amber" ? "bg-amber-200/70 text-amber-800" : "bg-slate-200 text-slate-700"}`}>
-                {scanOutcomeLabel(result.outcome)}
-              </span>
-              <h4 className="mt-1 text-base font-normal text-slate-900">Risiko {result.risk?.level ?? "unknown"}</h4>
+          </div>
+
+          {/* Keyakinan Sistem with Highlight Pill */}
+          <div className="flex items-center gap-2 text-xs font-normal text-slate-600">
+            <span>Keyakinan sistem:</span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200/60 capitalize">
+              {result.risk?.confidence === "high"
+                ? "Tinggi"
+                : result.risk?.confidence === "medium"
+                  ? "Sedang"
+                  : "Rendah"}
+            </span>
+          </div>
+        </div>
+
+        <p className="text-xs font-normal text-slate-500 leading-relaxed text-left pt-1">
+          {result.evidence_summary ||
+            "Evaluasi heuristik multi-mesin terhadap indikator telemetri, reputasi basis data, dan pola rekayasa sosial."}
+        </p>
+      </div>
+
+      {/* 2. Indikator & Temuan Analisis */}
+      <div className="border-t border-slate-100 pt-4 space-y-2 text-left">
+        <h3 className="text-sm font-semibold text-slate-800 mb-2 text-left">
+          Temuan analisis
+        </h3>
+
+        {result.findings && result.findings.length > 0 ? (
+          <div className="space-y-2 text-left">
+            {result.findings.map((finding) => {
+              const isCritical =
+                finding.severity === "high" || finding.severity === "critical";
+              return (
+                <div
+                  key={finding.id}
+                  className="flex items-start gap-2.5 text-xs font-normal leading-relaxed text-slate-700 text-left"
+                >
+                  <Icon
+                    icon={
+                      isCritical
+                        ? "solar:danger-triangle-linear"
+                        : "solar:shield-warning-linear"
+                    }
+                    className={`h-4 w-4 shrink-0 mt-0.5 ${
+                      isCritical ? "text-[#FF3B30]" : "text-[#FF9500]"
+                    }`}
+                  />
+                  <div className="min-w-0 flex-1 text-left">
+                    <span>{finding.indicator}</span>
+                    {finding.source && (
+                      <span className="ml-1.5 text-xs text-slate-400 font-mono">
+                        ({finding.source})
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-xs font-normal text-slate-500 text-left">
+            Tidak ditemukan indikator ancaman mencurigakan pada sampel ini.
+          </p>
+        )}
+
+        {/* Community Reviews if present */}
+        {reviews.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-slate-100 space-y-2 text-left">
+            <span className="text-xs font-normal text-slate-500 block text-left">
+              Laporan warga di komunitas ({reviews.length}):
+            </span>
+            <div className="space-y-1.5 text-left">
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="flex items-center justify-between gap-3 text-xs font-normal text-slate-700 text-left"
+                >
+                  <span className="truncate text-left">{review.category}</span>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-400 shrink-0">
+                    {review.evidence_url && (
+                      <a
+                        href={review.evidence_url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="hover:opacity-80 transition-opacity"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={review.evidence_url}
+                          alt="Bukti Laporan"
+                          className="h-6 w-6 rounded-md object-cover border border-slate-200"
+                        />
+                      </a>
+                    )}
+                    <span>
+                      {review.status === "verified"
+                        ? "Terverifikasi"
+                        : "Menunggu verifikasi"}
+                      {review.age_days !== null ? ` · ${review.age_days} hari lalu` : ""}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="text-right"><span className="block text-[11px] text-slate-500">Confidence</span><span className="text-sm text-slate-700">{result.risk?.confidence ?? "low"}</span></div>
-        </div>
-        <p className="mb-3 text-xs font-normal leading-relaxed text-slate-700 sm:text-sm">{result.evidence_summary}</p>
-        {!!result.findings?.length && <div className="mb-3 space-y-1.5 rounded-xl border border-gray-100 bg-white/90 p-3">
-          <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-400">Indikator temuan</span>
-          {result.findings.map((finding) => <div key={finding.id} className="flex items-start gap-2 text-xs text-slate-700"><Icon icon="solar:check-circle-bold" className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${tone === "red" ? "text-red-500" : tone === "amber" ? "text-amber-500" : "text-slate-500"}`} /><span>{finding.indicator}</span></div>)}
-        </div>}
-        {!!reviews.length && <div className="mb-3 rounded-xl border border-gray-100 bg-white/90 p-3">
-          <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-400">Kata warga ({result.artifacts?.community_review_count ?? reviews.length})</span>
-          <ul className="mt-2 space-y-1.5">
-            {reviews.map((review) => <li key={review.id} className="flex items-center justify-between gap-3 text-xs text-slate-700">
-              <span className="flex min-w-0 items-center gap-2">
-                <Icon icon={review.status === "verified" ? "solar:check-circle-bold" : "solar:flag-bold"} className={`h-3.5 w-3.5 shrink-0 ${review.status === "verified" ? "text-emerald-600" : "text-slate-400"}`} />
-                <span className="truncate">{review.category}</span>
-              </span>
-              <span className="flex shrink-0 items-center gap-2 text-[11px] text-slate-400">
-                {review.evidence_url && <a href={review.evidence_url} target="_blank" rel="noreferrer noopener" className="flex items-center gap-1 text-slate-500 hover:text-slate-800">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- the proof image is a third-party Cloudinary URL, not a project asset to optimise. */}
-                  <img src={review.evidence_url} alt="Bukti laporan warga" loading="lazy" referrerPolicy="no-referrer" className="h-7 w-7 rounded-lg border border-gray-200 object-cover" />
-                </a>}
-                <span>{review.status === "verified" ? "terverifikasi" : "belum terverifikasi"}{review.age_days !== null ? ` · ${review.age_days} hari lalu` : ""}</span>
-              </span>
-            </li>)}
-          </ul>
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">Isi laporan adalah klaim warga, bukan bukti tindak pidana. Hanya laporan terverifikasi yang menaikkan risiko.</p>
-        </div>}
-        {result.recommended_actions?.length > 0 && <div className="flex items-start gap-2 rounded-xl bg-slate-900 p-3 text-xs font-normal text-slate-100"><Icon icon="solar:info-circle-bold-duotone" className="mt-0.5 h-4 w-4 shrink-0 text-red-400" /><div><span className="font-medium text-white">Langkah disarankan: </span><span className="text-slate-300">{result.recommended_actions.join(" ")}</span></div></div>}
-        {!!result.limitations?.length && <p className="mt-3 text-xs text-slate-500">Keterbatasan: {result.limitations.join(" ")}</p>}
-        {footer}
-        {result.error && <p role="alert" className="mt-3 text-xs text-red-700">{result.error.code}: {result.error.message}</p>}
-        {result.risk?.coverage?.summary && <p className="mt-2 text-[11px] text-slate-500">Cakupan: {result.risk.coverage.summary}</p>}
+        )}
       </div>
-      <button type="button" onClick={onReset} className="mt-3.5 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-xs font-normal text-slate-700 transition-colors hover:bg-slate-50 sm:text-sm"><Icon icon="solar:restart-bold-duotone" className="h-4 w-4" /><span>{resetLabel}</span></button>
+
+      {/* 3. Inline Contextual Artifacts (URLs & APKs) */}
+      {redirectChain.length > 0 && (
+        <div className="border-t border-slate-100 pt-4 text-left">
+          <RedirectChainViewer chain={redirectChain} />
+        </div>
+      )}
+
+      {screenshotUrl && (
+        <div className="border-t border-slate-100 pt-4 text-left">
+          <BrowserScreenshotViewer screenshotUrl={screenshotUrl} />
+        </div>
+      )}
+
+      {extractedPermissions.length > 0 && (
+        <div className="border-t border-slate-100 pt-4 text-left">
+          <ApkPermissionsViewer permissions={extractedPermissions} />
+        </div>
+      )}
+
+      {/* 4. Rekomendasi Perlindungan */}
+      <div className="border-t border-slate-100 pt-4 space-y-2 text-left">
+        <h3 className="text-sm font-semibold text-slate-800 mb-2 text-left">
+          Langkah perlindungan yang disarankan
+        </h3>
+        <ul className="space-y-1.5 text-xs font-normal text-slate-700 text-left">
+          {recommendations.map((action, index) => (
+            <li key={index} className="flex items-start gap-2 leading-relaxed text-left">
+              <span className="text-slate-400 font-mono text-[11px] shrink-0 mt-0.5">
+                {index + 1}.
+              </span>
+              <span className="text-left">{action}</span>
+            </li>
+          ))}
+        </ul>
+
+        {/* Demoted Disclaimer / Limitations Text */}
+        {result.limitations && result.limitations.length > 0 && (
+          <p className="mt-3 text-xs text-slate-400 text-left leading-relaxed">
+            Catatan: {result.limitations.join(" ")}
+          </p>
+        )}
+      </div>
+
+      {/* 5. Integrated Contextual Footer (e.g. Phone Report Form) */}
+      {footer && (
+        <div className="border-t border-slate-100 pt-4 text-left">
+          {footer}
+        </div>
+      )}
+
+      {/* 6. Action Dock */}
+      <div className="border-t border-slate-100 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+        <button
+          type="button"
+          onClick={onReset}
+          className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 px-5 text-xs font-medium text-white hover:bg-slate-800 transition-colors shadow-2xs"
+        >
+          <Icon icon="solar:restart-linear" className="h-4 w-4" />
+          <span>{resetLabel || "Periksa data baru"}</span>
+        </button>
+
+        <Link
+          href="/history"
+          className="inline-flex items-center gap-1.5 text-xs font-normal text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <Icon icon="solar:history-linear" className="h-3.5 w-3.5" />
+          <span>Buka riwayat pemindaian</span>
+        </Link>
+      </div>
     </div>
   );
 }
