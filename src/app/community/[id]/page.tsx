@@ -20,7 +20,19 @@ const POST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 async function CommunityPostContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!POST_ID.test(id)) redirect("/community/latest");
-  const { data: { user } } = await (await createClient()).auth.getUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  let isAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (profile?.role === "admin") {
+      isAdmin = true;
+    }
+  }
   const metadata = (user?.user_metadata ?? {}) as ProfileMetadata;
   return (
     <>
@@ -28,7 +40,7 @@ async function CommunityPostContent({ params }: { params: Promise<{ id: string }
       <CommunityShell
         account={{ email: user?.email ?? undefined, avatarUrl: metadata.avatar_url ?? metadata.picture ?? null, name: metadata.full_name ?? metadata.name ?? null }}
       >
-        <PostThread postID={id} />
+        <PostThread postID={id} isAdmin={isAdmin} />
       </CommunityShell>
     </>
   );

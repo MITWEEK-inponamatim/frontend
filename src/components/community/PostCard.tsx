@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { AliasDisc } from "./NumberHandle";
 import { CategoryChip } from "./CategoryChip";
@@ -12,13 +13,25 @@ import { phoneSlug } from "@/lib/phone";
  * X/Twitter-style community discussion card displaying citizen reports and action metrics.
  */
 export function PostCard({ post, onVote }: { post: CommunityPost; onVote: (postID: string, value: number) => void }) {
+  const router = useRouter();
   const [zoomImage, setZoomImage] = useState(false);
   const href = `/community/${post.id}`;
   const slug = phoneSlug(post.number_e164);
   const handle = `@${post.author_alias.toLowerCase().replace(/[^a-z0-9]/g, "") || "warga"}`;
 
+  const handleCardClick = (event: MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest("button, a, input, textarea, [role='button']")) {
+      return;
+    }
+    router.push(href);
+  };
+
   return (
-    <article className="border-b border-slate-100 p-4 sm:p-5 hover:bg-slate-50/40 transition-colors flex gap-3.5 items-start">
+    <article
+      onClick={handleCardClick}
+      className="cursor-pointer border-b border-slate-100 p-4 sm:p-5 hover:bg-slate-50/70 transition-colors flex gap-3.5 items-start text-left"
+    >
       <Link href={href} tabIndex={-1} aria-hidden="true" className="shrink-0">
         <AliasDisc alias={post.author_alias} />
       </Link>
@@ -104,38 +117,57 @@ export function PostCard({ post, onVote }: { post: CommunityPost; onVote: (postI
           </div>
         )}
 
-        <footer className="flex items-center justify-between max-w-sm pt-2 text-xs font-normal text-slate-500">
-          <Link
-            href={`${href}#komentar`}
-            className="inline-flex items-center gap-1.5 font-normal text-slate-500 transition-colors hover:text-red-600"
-            title="Lihat komentar"
-          >
-            <Icon icon="solar:chat-round-line-linear" className="h-4 w-4" />
-            <span className="font-normal tabular-nums">{post.comment_count}</span>
-          </Link>
-
+        <footer className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-2 text-xs font-normal text-slate-500">
+          {/* 1. Upvote Button */}
           <button
             type="button"
             onClick={() => onVote(post.id, post.my_vote === 1 ? 0 : 1)}
             aria-pressed={post.my_vote === 1}
-            className={`inline-flex items-center gap-1.5 font-normal transition-colors ${
-              post.my_vote === 1 ? "text-red-600" : "text-slate-500 hover:text-red-600"
+            aria-label="Upvote cerita ini"
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-normal transition-colors ${
+              post.my_vote === 1
+                ? "bg-red-50 text-red-600 hover:bg-red-100"
+                : "text-slate-600 hover:bg-slate-100 hover:text-red-600"
             }`}
             title="Upvote cerita"
           >
-            <Icon
-              icon={post.my_vote === 1 ? "solar:alt-arrow-up-bold" : "solar:alt-arrow-up-linear"}
-              className="h-4 w-4"
-            />
-            <span className="font-normal tabular-nums">{post.score}</span>
+            <Icon icon="solar:alt-arrow-up-linear" className="h-3.5 w-3.5 shrink-0" />
+            <span className="font-normal tabular-nums">{post.up_count ?? 0}</span>
           </button>
 
+          {/* 2. Downvote Button */}
+          <button
+            type="button"
+            onClick={() => onVote(post.id, post.my_vote === -1 ? 0 : -1)}
+            aria-pressed={post.my_vote === -1}
+            aria-label="Downvote cerita ini"
+            className={`inline-flex items-center justify-center rounded-lg px-2 py-1 font-normal transition-colors ${
+              post.my_vote === -1
+                ? "bg-slate-200 text-slate-900 hover:bg-slate-300"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            }`}
+            title="Downvote cerita"
+          >
+            <Icon icon="solar:alt-arrow-down-linear" className="h-3.5 w-3.5 shrink-0" />
+          </button>
+
+          {/* 3. Comment Link */}
+          <Link
+            href={`${href}#komentar`}
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-normal text-slate-600 transition-colors hover:bg-slate-100 hover:text-red-600"
+            title="Lihat komentar dan diskusi"
+          >
+            <Icon icon="solar:chat-round-line-linear" className="h-3.5 w-3.5 shrink-0" />
+            <span className="font-normal tabular-nums">{post.comment_count}</span>
+          </Link>
+
+          {/* 4. Cek Nomor Link */}
           <Link
             href={`/recognize/phone/${slug}`}
-            className="inline-flex items-center gap-1 font-normal text-slate-500 transition-colors hover:text-slate-900"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-normal text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             title="Periksa nomor di pemindai ThreatLens"
           >
-            <Icon icon="solar:arrow-right-up-linear" className="h-4 w-4" />
+            <Icon icon="solar:arrow-right-up-linear" className="h-3.5 w-3.5 shrink-0" />
             <span className="font-normal">Cek Nomor</span>
           </Link>
         </footer>
