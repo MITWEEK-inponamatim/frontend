@@ -2,43 +2,59 @@
 
 import { Icon } from "@/components/ui/Icon";
 
-const BUTTON = "grid h-11 w-11 place-items-center rounded-full text-pos-ink transition-colors hover:bg-pos-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pos-action";
-
 /**
- * Up and down vote, as two icons in the row under the picture, outlined when the reader has not
- * spoken and filled when they have — the same switch a feed makes for a like.
- *
- * Clicking the arrow that is already lit withdraws the vote, because a reader who changes their mind
- * has to be able to walk back without hunting for a third control.
- *
- * Vote only orders this board — it never changes a number's risk level, which is decided by verified
- * reports. That is also why no total is printed inside these buttons: the count belongs in the line
- * under the row, next to the words that say what it means.
+ * Compact segmented vote pill displaying upvote count and downvote option.
  */
-export function VoteControls({ score, mine, onVote }: { score: number; mine: number; onVote: (value: number) => void }) {
+export function VoteControls({
+  score,
+  mine,
+  onVote,
+}: {
+  score: number;
+  mine: number;
+  onVote: (value: number) => void;
+}) {
   const toggle = (value: number) => onVote(mine === value ? 0 : value);
 
   return (
-    <div className="flex items-center gap-0.5">
+    <div className="inline-flex items-center rounded-full border border-slate-200/90 bg-slate-50/80 p-0.5 text-xs font-normal text-slate-700">
       <button
         type="button"
         onClick={() => toggle(1)}
         aria-pressed={mine === 1}
-        aria-label="Anggap cerita ini berguna"
-        className={`${BUTTON} ${mine === 1 ? "text-pos-good" : ""}`}
+        aria-label="Upvote cerita ini"
+        className={`inline-flex items-center gap-1.5 rounded-l-full px-2.5 py-1 text-xs font-normal transition-colors ${
+          mine === 1
+            ? "bg-red-50 text-red-600 hover:bg-red-100"
+            : "text-slate-700 hover:bg-slate-200/60 hover:text-slate-900"
+        }`}
       >
-        <Icon icon={mine === 1 ? "solar:alt-arrow-up-bold-duotone" : "solar:alt-arrow-up-linear"} className={`h-6 w-6 ${mine === 1 ? "pos-pop" : ""}`} />
+        <Icon
+          icon={mine === 1 ? "solar:alt-arrow-up-bold" : "solar:alt-arrow-up-linear"}
+          className="h-4 w-4 shrink-0"
+        />
+        <span className="font-normal">Upvote</span>
+        <span className="font-normal tabular-nums">{score}</span>
       </button>
+
+      <div className="h-3.5 w-px bg-slate-200" aria-hidden="true" />
+
       <button
         type="button"
         onClick={() => toggle(-1)}
         aria-pressed={mine === -1}
-        aria-label="Anggap cerita ini tidak berguna"
-        className={`${BUTTON} ${mine === -1 ? "text-pos-bad" : ""}`}
+        aria-label="Downvote cerita ini"
+        className={`inline-flex items-center justify-center rounded-r-full px-2 py-1 text-xs font-normal transition-colors ${
+          mine === -1
+            ? "bg-slate-200 text-slate-900 hover:bg-slate-300"
+            : "text-slate-500 hover:bg-slate-200/60 hover:text-slate-900"
+        }`}
       >
-        <Icon icon={mine === -1 ? "solar:alt-arrow-down-bold-duotone" : "solar:alt-arrow-down-linear"} className={`h-6 w-6 ${mine === -1 ? "pos-pop" : ""}`} />
+        <Icon
+          icon={mine === -1 ? "solar:alt-arrow-down-bold" : "solar:alt-arrow-down-linear"}
+          className="h-4 w-4 shrink-0"
+        />
       </button>
-      <span className="sr-only" aria-live="polite">{`Skor ${score}`}</span>
     </div>
   );
 }

@@ -5,30 +5,24 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
 import { api } from "@/lib/api";
 import { CategoryChip } from "@/components/community/CategoryChip";
-import { AliasDisc, NumberHandle } from "@/components/community/NumberHandle";
+import { AliasDisc } from "@/components/community/NumberHandle";
 import { VoteControls } from "@/components/community/VoteControls";
 import {
   COMMENT_MAX,
   communityMessage,
+  displayNumber,
   timeAgo,
   withLocalVote,
   type CommunityComment,
   type CommunityPost,
 } from "@/lib/community";
+import { phoneSlug } from "@/lib/phone";
 
 type ThreadResponse = { post?: CommunityPost; comments?: CommunityComment[] };
 type VoteResponse = { up_count: number; down_count: number; my_vote: number };
 
-const LINK_MUTED = "text-[13px] text-pos-muted transition-colors hover:text-pos-ink";
-const ACTION_TEXT = "text-[13px] font-semibold text-pos-action-tua transition-colors hover:text-pos-ink disabled:text-pos-muted";
-
 /**
- * One story, in full, with its comments — laid out like a permalink: the picture on a dark stage at
- * the left, the words and the conversation in the column at the right.
- *
- * Replies stop at one level. A thread that nests forever turns a discussion into an unreadable tree,
- * and the API refuses a reply-to-a-reply too, so this UI only ever offers the button the server
- * would honour.
+ * Full post detail thread displaying the citizen story, evidence, and nested comments hierarchy.
  */
 export function PostThread({ postID }: { postID: string }) {
   const [post, setPost] = useState<CommunityPost | null>(null);
@@ -39,6 +33,7 @@ export function PostThread({ postID }: { postID: string }) {
   const [replyTo, setReplyTo] = useState<CommunityComment | null>(null);
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
+  const [zoomImage, setZoomImage] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,8 +50,6 @@ export function PostThread({ postID }: { postID: string }) {
   }, [postID]);
 
   useEffect(() => {
-    // A timer, like the scanner's poll: the first render has to show a spinner, and a setState that
-    // runs synchronously inside the effect body is the cascading render React asks us to avoid.
     const timer = setTimeout(() => void load(), 0);
     return () => clearTimeout(timer);
   }, [load]);
@@ -66,8 +59,17 @@ export function PostThread({ postID }: { postID: string }) {
     const before = post;
     setPost(withLocalVote(before, value));
     try {
-      const result = (await api(`/api/v1/community/posts/${postID}/vote`, { method: "POST", body: JSON.stringify({ value }) })) as VoteResponse;
-      setPost({ ...before, up_count: result.up_count, down_count: result.down_count, score: result.up_count - result.down_count, my_vote: result.my_vote });
+      const result = (await api(`/api/v1/community/posts/${postID}/vote`, {
+        method: "POST",
+        body: JSON.stringify({ value }),
+      })) as VoteResponse;
+      setPost({
+        ...before,
+        up_count: result.up_count,
+        down_count: result.down_count,
+        score: result.up_count - result.down_count,
+        my_vote: result.my_vote,
+      });
     } catch (failure) {
       setPost(before);
       setErrorMessage(communityMessage(failure instanceof Error ? failure.message : null));
@@ -80,8 +82,13 @@ export function PostThread({ postID }: { postID: string }) {
     setSending(true);
     setErrorMessage("");
     try {
-      await api(`/api/v1/community/posts/${postID}/comments`, { method: "POST", body: JSON.stringify({ body: trimmed, parent_id: parentID }) });
-      setComment(""); setReply(""); setReplyTo(null);
+      await api(`/api/v1/community/posts/${postID}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ body: trimmed, parent_id: parentID }),
+      });
+      setComment("");
+      setReply("");
+      setReplyTo(null);
       await load();
     } catch (failure) {
       setErrorMessage(communityMessage(failure instanceof Error ? failure.message : null));
@@ -92,175 +99,290 @@ export function PostThread({ postID }: { postID: string }) {
 
   if (loading) {
     return (
-      <div className="grid place-items-center gap-2 py-24 text-[13px] text-pos-muted">
-        <Icon icon="solar:restart-bold-duotone" className="h-6 w-6 animate-spin text-pos-ink" />
-        <span aria-live="polite">Memuat cerita...</span>
+      <div className="grid place-items-center gap-3 py-28 text-xs font-normal text-slate-500">
+        <Icon icon="solar:restart-bold-duotone" className="h-7 w-7 animate-spin text-slate-800" />
+        <span aria-live="polite">Memuat cerita warga...</span>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="mx-auto w-full max-w-[470px] px-4 py-16 text-center">
-        <Icon icon="solar:danger-triangle-linear" className="mx-auto mb-3 h-8 w-8 text-pos-muted" />
-        <p className="text-[15px] font-semibold text-pos-ink">Cerita ini tidak bisa dibuka.</p>
-        <p className="mx-auto mt-1 max-w-sm text-[13px] leading-relaxed text-pos-muted">{errorMessage || communityMessage("not_found")}</p>
-        <Link href="/community/latest" className="mt-4 inline-block text-[13px] font-semibold text-pos-action-tua hover:text-pos-ink">
-          Kembali ke papan
+      <div className="mx-auto w-full max-w-md px-4 py-20 text-center">
+        <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-red-50 text-red-600">
+          <Icon icon="solar:danger-triangle-linear" className="h-6 w-6" />
+        </div>
+        <h2 className="text-base font-normal text-slate-900">Cerita Tidak Ditemukan</h2>
+        <p className="mt-1 text-xs font-normal text-slate-500">{errorMessage || communityMessage("not_found")}</p>
+        <Link
+          href="/community/latest"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-normal text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+        >
+          <Icon icon="solar:arrow-left-linear" className="h-4 w-4" />
+          <span>Kembali ke Papan Cerita</span>
         </Link>
       </div>
     );
   }
 
-  const isReply = (parentID: string) => replyTo?.id === parentID;
   const commentCount = threads.reduce((total, thread) => total + 1 + (thread.replies?.length ?? 0), 0);
-  const untouched = post.up_count === 0 && post.down_count === 0;
+  const slug = phoneSlug(post.number_e164);
+  const handle = `@${post.author_alias.toLowerCase().replace(/[^a-z0-9]/g, "") || "warga"}`;
 
   return (
-    <div className="mx-auto w-full max-w-[935px] px-0 pb-24 sm:px-4 sm:pb-10 sm:pt-6">
-      <Link href="/community/latest" className={`${LINK_MUTED} mb-3 inline-flex items-center gap-1.5 px-4 sm:px-0`}>
+    <div className="mx-auto w-full max-w-2xl px-3 sm:px-4 py-4 sm:py-6">
+      <Link
+        href="/community/latest"
+        className="mb-4 inline-flex items-center gap-1.5 text-xs font-normal text-slate-500 transition-colors hover:text-slate-900"
+      >
         <Icon icon="solar:arrow-left-linear" className="h-4 w-4" />
-        <span>Semua cerita</span>
+        <span>Kembali ke Semua Cerita</span>
       </Link>
 
-      <article className="overflow-hidden border-y border-pos-line bg-pos-card sm:rounded-xl sm:border">
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_404px]">
-          <div className="flex min-h-[280px] items-center justify-center bg-pos-ink lg:max-h-[680px]">
-            {post.evidence_url ? (
-              // eslint-disable-next-line @next/next/no-img-element -- Cloudinary proof at its delivered size; next/image would need a remote loader for one picture.
-              <img src={post.evidence_url} alt={`Bukti gambar cerita ${post.title}`} className="max-h-[680px] w-full object-contain" />
-            ) : (
-              <p className="px-6 text-center text-[13px] leading-relaxed text-white/60">Cerita ini tidak punya lampiran gambar.</p>
-            )}
-          </div>
-
-          <div className="flex min-w-0 flex-col border-t border-pos-line lg:border-t-0 lg:border-l lg:max-h-[680px]">
-            <header className="flex items-center gap-3 border-b border-pos-line px-4 py-3">
-              <AliasDisc alias={post.author_alias} />
-              <div className="min-w-0 flex-1">
-                <NumberHandle number={post.number_e164} size="sm" />
-                <p className="mt-0.5 truncate text-[12px] text-pos-muted">
-                  <span className="font-semibold text-pos-ink/80">{post.author_alias}</span>
-                  <span aria-hidden="true"> · </span>
-                  {timeAgo(post.created_at)}
-                </p>
+      <article className="border-b border-slate-100 bg-white pb-6">
+        <header className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <AliasDisc alias={post.author_alias} />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1.5 text-xs font-normal">
+                <span className="font-normal text-sm text-slate-900">{post.author_alias}</span>
+                <span className="text-slate-400 font-normal">{handle}</span>
+                <span className="text-slate-300 font-normal" aria-hidden="true">·</span>
+                <time className="text-slate-400 font-normal">{timeAgo(post.created_at)}</time>
               </div>
-              <CategoryChip category={post.category} />
-            </header>
-
-            <div id="komentar" className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
-              <div>
-                <p className="text-[14px] leading-[1.6] text-pos-ink/90">
-                  <span className="font-semibold text-pos-ink">{post.title}</span>{" "}
-                  <span className="whitespace-pre-line">{post.body}</span>
-                </p>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-0.5">
-                  <VoteControls score={post.score} mine={post.my_vote ?? 0} onVote={vote} />
-                </div>
-                <p className="mt-1 text-[13px] leading-snug text-pos-ink">
-                  {untouched ? (
-                    <span className="text-pos-muted">Belum ada yang menilai cerita ini.</span>
-                  ) : (
-                    <>
-                      <span className="font-semibold tabular-nums">{post.up_count}</span> menganggap berguna
-                      {post.down_count > 0 && (
-                        <>
-                          <span aria-hidden="true"> · </span>
-                          <span className="font-semibold tabular-nums">{post.down_count}</span> menganggap tidak
-                        </>
-                      )}
-                    </>
-                  )}
-                </p>
-                <p className="mt-2 text-[12px] leading-relaxed text-pos-muted">
-                  Suara di sini hanya mengurutkan papan. Status berbahaya sebuah nomor ditentukan oleh laporan yang sudah
-                  diverifikasi, bukan oleh berapa banyak orang yang percaya satu cerita.
-                </p>
-              </div>
-
-              {errorMessage && <p role="alert" className="text-[13px] leading-relaxed text-pos-bad">{errorMessage}</p>}
-
-              <div className="border-t border-pos-line pt-3">
-                <p className="text-[13px] font-semibold text-pos-ink">
-                  {commentCount === 0 ? "Belum ada komentar" : `${commentCount} komentar`}
-                </p>
-                <p className="mt-1 text-[12px] leading-relaxed text-pos-muted">
-                  Tanggapi dengan pengalaman Anda sendiri, bukan dengan tuduhan. Nomor bisa dipalsukan dan berpindah
-                  pemilik, jadi satu cerita yang benar belum pasti tentang orang yang sama.
-                </p>
-
-                <ul className="mt-3 space-y-4">
-                  {threads.map((thread) => (
-                    <li key={thread.id}>
-                      <CommentRow comment={thread} />
-                      <div className="mt-2 space-y-3 pl-3 sm:pl-4">
-                        {(thread.replies ?? []).map((answer) => (
-                          <div key={answer.id} className="border-l border-pos-line pl-3">
-                            <CommentRow comment={answer} nested />
-                          </div>
-                        ))}
-                        {isReply(thread.id) ? (
-                          <form
-                            onSubmit={(event) => { event.preventDefault(); submit(reply, thread.id); }}
-                            className="flex items-center gap-2"
-                          >
-                            <input value={reply} maxLength={COMMENT_MAX} disabled={sending} autoFocus
-                              aria-label={`Balas ${thread.author_alias}`} onChange={(event) => setReply(event.target.value)}
-                              placeholder={`Balas ${thread.author_alias}...`}
-                              className="min-w-0 flex-1 rounded-lg border border-pos-line bg-pos-card px-3 py-1.5 text-[13px] text-pos-ink placeholder:text-pos-muted focus:border-pos-ink focus:outline-none" />
-                            <button type="submit" disabled={sending || !reply.trim()} className={ACTION_TEXT}>Kirim</button>
-                            <button type="button" onClick={() => { setReplyTo(null); setReply(""); }} className={LINK_MUTED}>Batal</button>
-                          </form>
-                        ) : (
-                          <button type="button" onClick={() => { setReplyTo(thread); setReply(""); }} className={`${LINK_MUTED} text-[12px] font-semibold`}>
-                            Balas
-                          </button>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+              <div className="mt-1 flex items-center gap-2">
+                <Link
+                  href={`/recognize/phone/${slug}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-50 px-2.5 py-0.5 text-xs font-normal tabular-nums text-slate-700 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                >
+                  <Icon icon="solar:phone-bold-duotone" className="h-3.5 w-3.5 text-red-600" />
+                  <span className="font-normal">{displayNumber(post.number_e164)}</span>
+                </Link>
               </div>
             </div>
-
-            <form
-              onSubmit={(event) => { event.preventDefault(); submit(comment, ""); }}
-              className="flex items-center gap-2 border-t border-pos-line px-4 py-3"
-            >
-              <input value={comment} maxLength={COMMENT_MAX} disabled={sending} aria-label="Tulis komentar"
-                onChange={(event) => { setComment(event.target.value); setErrorMessage(""); }}
-                placeholder="Tambahkan komentar..."
-                className="min-w-0 flex-1 bg-transparent text-[14px] text-pos-ink placeholder:text-pos-muted focus:outline-none" />
-              <button type="submit" disabled={sending || !comment.trim()} className={ACTION_TEXT}>
-                {sending ? "Mengirim..." : "Bagikan"}
-              </button>
-            </form>
           </div>
-        </div>
+          <CategoryChip category={post.category} />
+        </header>
+
+        <h1 className="mt-4 text-xl sm:text-2xl font-normal leading-snug text-slate-900">
+          {post.title}
+        </h1>
+
+        <p className="mt-3 text-sm sm:text-base font-normal leading-relaxed text-slate-700 whitespace-pre-line">
+          {post.body}
+        </p>
+
+        {post.evidence_url && (
+          <div className="mt-5 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-2">
+            <button
+              type="button"
+              onClick={() => setZoomImage(true)}
+              aria-label="Perbesar gambar bukti"
+              className="group relative flex max-h-[460px] w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-xl bg-slate-950/5"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={post.evidence_url}
+                alt={`Bukti gambar cerita ${post.title}`}
+                className="max-h-[460px] w-full object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+              />
+              <span className="absolute bottom-2 right-2 rounded-lg bg-slate-900/70 px-2.5 py-1 text-[11px] font-normal text-white">
+                Klik untuk perbesar
+              </span>
+            </button>
+          </div>
+        )}
+
+        {zoomImage && post.evidence_url && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Pratinjau gambar bukti"
+          >
+            <button
+              type="button"
+              onClick={() => setZoomImage(false)}
+              aria-label="Tutup pratinjau"
+              className="absolute right-4 top-4 rounded-full bg-slate-800 p-2 text-white hover:bg-slate-700"
+            >
+              <Icon icon="solar:close-circle-linear" className="h-6 w-6" />
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={post.evidence_url}
+              alt={`Bukti gambar cerita ${post.title}`}
+              className="max-h-[90vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
+            />
+          </div>
+        )}
+
+        <footer className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+          <div className="flex items-center gap-3">
+            <VoteControls score={post.score} mine={post.my_vote ?? 0} onVote={vote} />
+            <span className="text-xs font-normal text-slate-500">
+              <span className="font-normal text-slate-800">{post.up_count}</span> menganggap berguna
+            </span>
+          </div>
+
+          <Link
+            href={`/recognize/phone/${slug}`}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-normal text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600"
+          >
+            <Icon icon="solar:shield-warning-linear" className="h-4 w-4 text-red-600" />
+            <span>Cek Pemindai Nomor</span>
+          </Link>
+        </footer>
       </article>
+
+      {/* Comment Section */}
+      <section id="komentar" className="mt-6">
+        <h2 className="text-base sm:text-lg font-normal text-slate-900">
+          Diskusi & Tanggapan Warga ({commentCount})
+        </h2>
+        <p className="mt-1 text-xs font-normal text-slate-500">
+          Bagikan pengalaman serupa untuk saling mengingatkan sesama warga tanpa menyebarkan data pribadi.
+        </p>
+
+        {/* Root Comment Box */}
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit(comment, "");
+          }}
+          className="mt-4 space-y-2 rounded-2xl border border-slate-100 bg-slate-50/50 p-3 sm:p-4"
+        >
+          <textarea
+            value={comment}
+            maxLength={COMMENT_MAX}
+            disabled={sending}
+            rows={3}
+            aria-label="Tulis komentar"
+            onChange={(event) => {
+              setComment(event.target.value);
+              setErrorMessage("");
+            }}
+            placeholder="Tuliskan komentar atau tanggapan Anda..."
+            className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-xs sm:text-sm font-normal text-slate-900 placeholder:text-slate-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+          />
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-[11px] font-normal tabular-nums text-slate-400">
+              {comment.trim().length}/{COMMENT_MAX}
+            </span>
+            <button
+              type="submit"
+              disabled={sending || !comment.trim()}
+              className="rounded-full bg-red-600 px-5 py-2 text-xs font-normal text-white shadow-sm transition-colors hover:bg-red-700 disabled:bg-slate-200 disabled:text-slate-400"
+            >
+              {sending ? "Mengirim..." : "Kirim Komentar"}
+            </button>
+          </div>
+        </form>
+
+        {errorMessage && (
+          <div role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-normal text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
+        {/* Comment List */}
+        <div className="mt-6 space-y-5">
+          {threads.length === 0 ? (
+            <p className="py-6 text-center text-xs font-normal text-slate-400">
+              Belum ada komentar. Jadilah warga pertama yang memberikan tanggapan!
+            </p>
+          ) : (
+            threads.map((thread) => (
+              <div key={thread.id} className="space-y-3 border-b border-slate-100 pb-4">
+                <CommentRow comment={thread} />
+
+                {/* Nested Replies with Hairline Guide */}
+                <div className="space-y-3 border-l border-slate-100 pl-3 sm:pl-4 ml-4">
+                  {(thread.replies ?? []).map((replyItem) => (
+                    <CommentRow key={replyItem.id} comment={replyItem} nested />
+                  ))}
+
+                  {replyTo?.id === thread.id ? (
+                    <form
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        submit(reply, thread.id);
+                      }}
+                      className="mt-2 space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3"
+                    >
+                      <input
+                        value={reply}
+                        maxLength={COMMENT_MAX}
+                        disabled={sending}
+                        autoFocus
+                        aria-label={`Balas ${thread.author_alias}`}
+                        onChange={(event) => setReply(event.target.value)}
+                        placeholder={`Balas ${thread.author_alias}...`}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-normal text-slate-900 placeholder:text-slate-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyTo(null);
+                            setReply("");
+                          }}
+                          className="rounded-full px-3 py-1 text-xs font-normal text-slate-500 hover:text-slate-900"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={sending || !reply.trim()}
+                          className="rounded-full bg-red-600 px-4 py-1 text-xs font-normal text-white shadow-sm hover:bg-red-700 disabled:bg-slate-200 disabled:text-slate-400"
+                        >
+                          {sending ? "Mengirim..." : "Kirim"}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyTo(thread);
+                        setReply("");
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-normal text-slate-500 transition-colors hover:text-red-600"
+                    >
+                      <Icon icon="solar:chat-round-line-linear" className="h-3.5 w-3.5" />
+                      <span>Balas</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
     </div>
   );
 }
 
+/**
+ * Renders an individual comment item with alias badge and formatted content.
+ */
 function CommentRow({ comment, nested = false }: { comment: CommunityComment; nested?: boolean }) {
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-2.5 sm:gap-3">
       <AliasDisc alias={comment.author_alias} />
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] leading-[1.5] text-pos-ink/90">
-          <span className="font-semibold text-pos-ink">{comment.author_alias}</span>{" "}
-          <span className="whitespace-pre-line">{comment.body}</span>
-        </p>
-        <p className="mt-1 text-[12px] text-pos-muted">
-          {timeAgo(comment.created_at)}
+        <div className="flex items-center gap-1.5 text-xs font-normal">
+          <span className="font-normal text-slate-900">{comment.author_alias}</span>
+          <span className="text-slate-400 font-normal" aria-hidden="true">·</span>
+          <time className="text-slate-400 font-normal">{timeAgo(comment.created_at)}</time>
           {nested && (
-            <>
-              <span aria-hidden="true"> · </span>balasan
-            </>
+            <span className="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-normal text-slate-600">
+              balasan
+            </span>
           )}
+        </div>
+        <p className="mt-1 text-xs sm:text-sm font-normal leading-relaxed text-slate-700 whitespace-pre-line">
+          {comment.body}
         </p>
       </div>
     </div>

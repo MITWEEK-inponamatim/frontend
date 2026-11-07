@@ -6,247 +6,570 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { PostCard } from "@/components/community/PostCard";
 import { DangerousNumberList } from "@/components/community/DangerousNumberList";
+import { DangerousNumberBanner } from "@/components/community/DangerousNumberBanner";
 import { CreatePostPanel } from "@/components/community/CreatePostPanel";
 import { ReportNumberPanel } from "@/components/community/ReportNumberPanel";
 import { NumberHandle } from "@/components/community/NumberHandle";
 import { useCommunity, type CommunityTab } from "@/hooks/useCommunity";
-import { canonicalPhone } from "@/lib/phone";
-import { displayNumber } from "@/lib/community";
+import { canonicalPhone, phoneSlug } from "@/lib/phone";
+import { displayNumber, type DangerousNumber } from "@/lib/community";
+import { api } from "@/lib/api";
 
-// Outlined when idle, filled when it is the tab you are on — the same switch a feed's nav makes, so
-// the active tab does not need a colour to be recognised. Each tab has its own address, because a
-// tab worth sharing or coming back to has to be something a link can point at.
-export const TABS: { id: CommunityTab; label: string; href: string; idle: string; active: string }[] = [
-  { id: "new", label: "Terbaru", href: "/community/latest", idle: "solar:clock-circle-linear", active: "solar:clock-circle-bold" },
-  { id: "top", label: "Terpopuler", href: "/community/popular", idle: "solar:star-linear", active: "solar:star-bold-duotone" },
-  { id: "dangerous", label: "Nomor berbahaya", href: "/community/phone", idle: "solar:shield-warning-linear", active: "solar:shield-warning-bold-duotone" },
+export const TABS: { id: CommunityTab; label: string; href: string }[] = [
+  { id: "new", label: "Terbaru", href: "/community/latest" },
+  { id: "top", label: "Terpopuler", href: "/community/popular" },
+  { id: "dangerous", label: "Nomor Berbahaya", href: "/community/phone" },
 ];
 
 const RULES = [
-  "Setiap cerita butuh bukti gambar. Tanpa gambar, ceritanya tidak terkirim.",
-  "Penulis tampil sebagai alias. Akun aslinya hanya dipakai untuk mengurutkan papan dan menghentikan spam.",
-  "Vote mengatur urutan papan saja. Vote tidak membuat sebuah nomor jadi berbahaya.",
-  "Daftar nomor berbahaya datang dari laporan yang sudah diverifikasi moderator — ambang yang sama dengan hasil pemindaian.",
+  "Setiap cerita wajib menyertakan tangkapan layar bukti otentik.",
+  "Penulis tampil dengan alias anonim untuk menjaga kerahasiaan identitas.",
+  "Upvote berfungsi merangking diskusi terpopuler, bukan mengubah status hukum nomor.",
+  "Status nomor berbahaya hanya diperbarui melalui laporan yang lolos verifikasi moderator.",
 ];
 
-const NAV_ROW =
-  "flex w-full items-center gap-4 rounded-lg px-3 py-2.5 text-left text-[14px] transition-colors hover:bg-pos-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pos-action";
+const CATEGORIES = [
+  { label: "Semua Kategori", href: "/community/latest" },
+  { label: "Kurir & Undangan APK", href: "/community/latest?kategori=apk" },
+  { label: "Perbankan & Rekening", href: "/community/latest?kategori=bank" },
+  { label: "Telemarketing & Pinjol", href: "/community/latest?kategori=telemarketing" },
+  { label: "Undian & Hadiah Palsu", href: "/community/latest?kategori=hadiah" },
+];
 
 /**
- * The board: three tabs, three addresses, and two actions that never share a button.
- *
- * "Terpopuler" is ordered by votes and "Nomor berbahaya" by verified reports, and keeping those in
- * separate tabs is what stops a popular story from looking like a verdict. The number filter comes
- * from ?nomor= so a dangerous row, a shared link, and the board itself all agree on what is shown.
- *
- * The middle column stays 470px wide because that is the measure a caption is readable at, and the
- * rail and the notes sit outside it instead of on top of the stories.
+ * Reddit/Quora-style 3-column community board component featuring clean information architecture,
+ * non-redundant navigation, and streamlined entry points.
  */
 export function CommunityBoard({ tab }: { tab: CommunityTab }) {
   const [compose, setCompose] = useState(false);
   const [reporting, setReporting] = useState(false);
-  const [notice, setNotice] = useState("");
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [notice, setNotice] = useState<{ message: string; numberSlug?: string } | null>(null);
+  const [topNumbers, setTopNumbers] = useState<DangerousNumber[]>([]);
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  // Canonical before anything else reads it: ?nomor= arrives as a slug (62812…) or a typed number
-  // (0812…), and both spellings must narrow the feed to the same stories and display the same way.
+
   const rawNumber = params.get("nomor") ?? "";
   const number = canonicalPhone(rawNumber);
   const feed = useCommunity(tab, number);
 
-  // Carrying ?nomor= across tabs keeps the same question answered in each ordering. The dangerous
-  // list is not narrowed by a number — it *is* a list of numbers — so the filter stops at its door.
   const tabHref = (item: (typeof TABS)[number]) =>
-    item.id === "dangerous" || !rawNumber ? item.href : `${item.href}?nomor=${encodeURIComponent(rawNumber)}`;
+    item.id === "dangerous" || !rawNumber
+      ? item.href
+      : `${item.href}?nomor=${encodeURIComponent(rawNumber)}`;
 
-  // No refresh call: the ?nomor= value feeds useCommunity, so changing the address reloads the
-  // list by itself.
   const clearFilter = () => router.replace(pathname);
 
   useEffect(() => {
     if (!notice) return;
-    const timer = setTimeout(() => setNotice(""), 6000);
+    const timer = setTimeout(() => setNotice(null), 7000);
     return () => clearTimeout(timer);
   }, [notice]);
 
-  const onCreated = (created: { id?: string; author_alias?: string; number_e164?: string }) => {
+  useEffect(() => {
+    let unmounted = false;
+    api("/api/v1/community/dangerous-numbers?limit=5&offset=0")
+      .then((res: unknown) => {
+        const data = res as { numbers?: DangerousNumber[] } | null;
+        if (!unmounted && data?.numbers) {
+          setTopNumbers(data.numbers);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      unmounted = true;
+    };
+  }, []);
+
+  const onCreated = (created: {
+    id?: string;
+    author_alias?: string;
+    number_e164?: string;
+  }) => {
     feed.refresh();
-    setNotice(
-      created.id
-        ? `Tayang sebagai ${created.author_alias ?? "Warga"}${created.number_e164 ? ` · ${displayNumber(created.number_e164)}` : ""}`
-        : "Cerita Anda sudah dikirim.",
-    );
+    const slug = created.number_e164 ? phoneSlug(created.number_e164) : undefined;
+    setNotice({
+      message: created.id
+        ? `Cerita berhasil diterbitkan sebagai ${created.author_alias ?? "Warga"}${created.number_e164 ? ` · ${displayNumber(created.number_e164)}` : ""}`
+        : "Cerita Anda berhasil dibagikan.",
+      numberSlug: slug,
+    });
   };
 
-  const rail = (
-    <>
-      <nav aria-label="Tab papan" className="space-y-1">
-        {TABS.map((item) => {
-          const on = tab === item.id;
-          return (
-            <Link key={item.id} href={tabHref(item)} aria-current={on ? "page" : undefined}
-              className={`${NAV_ROW} ${on ? "font-semibold text-pos-ink" : "text-pos-ink/70"}`}>
-              <Icon icon={on ? item.active : item.idle} className="h-6 w-6 shrink-0 text-pos-ink" />
-              <span className="truncate">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-      {/* Dua aksi yang berbeda, bukan satu tombol yang berganti nama. Cerita ditulis di papan ini,
-          nomor dilaporkan lewat form laporan itu sendiri — keduanya tinggal di halaman yang sama,
-          karena hanya laporan terverifikasi yang bisa membuat sebuah nomor masuk daftar. */}
-      {tab === "dangerous" ? (
-        <button type="button" onClick={() => setReporting(true)} className={`${NAV_ROW} mt-2 text-pos-ink/70 hover:text-pos-ink`}>
-          <Icon icon="solar:phone-calling-bold-duotone" className="h-6 w-6 shrink-0 text-pos-ink" />
-          <span className="min-w-0">
-            <span className="block truncate">Lapor nomor berbahaya</span>
-            <span className="mt-0.5 block text-[11px] leading-snug text-pos-muted">Wajib sertakan bukti gambar</span>
-          </span>
-        </button>
-      ) : (
-        <button type="button" onClick={() => setCompose(true)} className={`${NAV_ROW} mt-2 text-pos-ink/70 hover:text-pos-ink`}>
-          <Icon icon="solar:add-square-linear" className="h-6 w-6 shrink-0 text-pos-ink" />
-          <span className="truncate">Cerita baru</span>
-        </button>
-      )}
-    </>
-  );
+  const onReportSuccess = (report: { number_e164: string; category?: string }) => {
+    feed.refresh();
+    const slug = phoneSlug(report.number_e164);
+    setNotice({
+      message: `Nomor ${displayNumber(report.number_e164)} berhasil dilaporkan ke database intelijen.`,
+      numberSlug: slug,
+    });
+  };
 
   return (
     <>
-      <div className="mx-auto flex w-full max-w-[1110px] justify-center gap-7 px-0 sm:px-4">
-        <div className="hidden w-[244px] shrink-0 self-start pt-3 lg:sticky lg:top-[61px] lg:block">{rail}</div>
+      <div className="mx-auto flex w-full max-w-7xl justify-center bg-white min-h-screen">
+        {/* 1. Left Navigation Rail (Pure Community Topics & Feeds, No Duplicate Top Nav, No CTA Conflict) */}
+        <aside className="hidden md:flex flex-col w-[200px] lg:w-[230px] xl:w-[250px] shrink-0 sticky top-16 h-[calc(100vh-4rem)] pt-4 pb-6 px-3 justify-between text-left">
+          <div className="space-y-5 text-left">
+            {/* Feeds Section */}
+            <div className="space-y-1 text-left">
+              <span className="px-3 text-[11px] font-normal uppercase tracking-wider text-slate-400 block text-left">
+                Umpan Komunitas
+              </span>
+              <div className="space-y-0.5 pt-1 text-left">
+                <Link
+                  href="/community/latest"
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-normal transition-colors ${
+                    tab === "new"
+                      ? "bg-red-50 text-red-700 font-medium"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <Icon
+                    icon="solar:clock-circle-linear"
+                    className={`h-4 w-4 shrink-0 ${tab === "new" ? "text-red-600" : "text-slate-500"}`}
+                  />
+                  <span>Terbaru</span>
+                </Link>
+                <Link
+                  href="/community/popular"
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-normal transition-colors ${
+                    tab === "top"
+                      ? "bg-red-50 text-red-700 font-medium"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <Icon
+                    icon="solar:fire-linear"
+                    className={`h-4 w-4 shrink-0 ${tab === "top" ? "text-red-600" : "text-slate-500"}`}
+                  />
+                  <span>Terpopuler</span>
+                </Link>
+                <Link
+                  href="/community/phone"
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-normal transition-colors ${
+                    tab === "dangerous"
+                      ? "bg-red-50 text-red-700 font-medium"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <Icon
+                    icon="solar:phone-bold-duotone"
+                    className={`h-4 w-4 shrink-0 ${tab === "dangerous" ? "text-red-600" : "text-slate-500"}`}
+                  />
+                  <span>Nomor Berbahaya</span>
+                </Link>
+              </div>
+            </div>
 
-        <div className="min-w-0 w-full max-w-[614px] border-pos-line pb-24 sm:pt-3 lg:w-[470px] lg:max-w-[470px] lg:shrink-0 lg:pb-10">
-          {feed.errorMessage && (
-            <p role="alert" className="border-y border-pos-line bg-pos-card px-4 py-2.5 text-[13px] text-pos-bad">{feed.errorMessage}</p>
+            {/* Categories Section */}
+            <div className="space-y-1 pt-3 border-t border-slate-100 text-left">
+              <span className="px-3 text-[11px] font-normal uppercase tracking-wider text-slate-400 block text-left">
+                Topik Penipuan
+              </span>
+              <div className="space-y-0.5 pt-1 text-left">
+                {CATEGORIES.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="flex items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                  >
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Tools Quick Links */}
+            <div className="space-y-1 pt-3 border-t border-slate-100 text-left">
+              <span className="px-3 text-[11px] font-normal uppercase tracking-wider text-slate-400 block text-left">
+                Pintasan Fitur
+              </span>
+              <div className="space-y-0.5 pt-1 text-left">
+                <Link
+                  href="/recognize"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                >
+                  <Icon icon="solar:shield-check-linear" className="h-4 w-4 text-slate-400" />
+                  <span>Pindai Target</span>
+                </Link>
+                <Link
+                  href="/history"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                >
+                  <Icon icon="solar:history-linear" className="h-4 w-4 text-slate-400" />
+                  <span>Riwayat Scan</span>
+                </Link>
+                <Link
+                  href="/learn"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                >
+                  <Icon icon="solar:book-2-linear" className="h-4 w-4 text-slate-400" />
+                  <span>Simulasi Belajar</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 text-[11px] font-normal leading-relaxed text-slate-400 text-left">
+            ThreatLens Anti-Scam Platform
+          </div>
+        </aside>
+
+        {/* 2. Center Timeline Feed Column */}
+        <main className="w-full max-w-[620px] border-x border-slate-100 min-h-screen bg-white flex flex-col pb-24 md:pb-12 text-left">
+          {/* Sticky Tab Header (Redundant 'Papan Warga' header eliminated!) */}
+          <div className="sticky top-16 z-20 border-b border-slate-100 bg-white/95 backdrop-blur-sm">
+            <div className="flex border-b border-slate-100">
+              {TABS.map((item) => {
+                const active = tab === item.id;
+                return (
+                  <Link
+                    key={item.id}
+                    href={tabHref(item)}
+                    className="flex-1 py-3 text-center text-xs sm:text-sm font-normal transition-colors relative hover:bg-slate-50/60"
+                  >
+                    <span
+                      className={`font-normal ${active ? "text-red-600 font-medium" : "text-slate-500 hover:text-slate-900"}`}
+                    >
+                      {item.label}
+                    </span>
+                    {active && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-12 rounded-full bg-red-600" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Dangerous Numbers Top Banner if on that tab */}
+          {tab === "dangerous" && !number && (
+            <DangerousNumberBanner onReportClick={() => setReporting(true)} />
           )}
 
-          {feed.loading ? (
-            <div className="grid place-items-center gap-2 bg-pos-card py-20 text-[13px] text-pos-muted">
-              <Icon icon="solar:restart-bold-duotone" className="h-6 w-6 animate-spin text-pos-ink" />
-              <span aria-live="polite">Memuat cerita warga...</span>
+          {/* Reddit-Style Sleek Single-Line Create Post Entry Bar (Expandable on click) */}
+          {tab !== "dangerous" && !number && (
+            <div
+              onClick={() => setCompose(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") setCompose(true);
+              }}
+              className="border-b border-slate-100 p-3 sm:p-3.5 flex items-center gap-3 cursor-pointer bg-white hover:bg-slate-50/60 transition-colors text-left"
+            >
+              <div className="h-9 w-9 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-normal shrink-0">
+                W
+              </div>
+              <div className="flex-1 rounded-full bg-slate-100/80 hover:bg-slate-100 px-4 py-2 text-xs font-normal text-slate-400 transition-colors text-left truncate">
+                Ceritakan modus penipuan atau bagikan pengalaman Anda...
+              </div>
+              <div className="flex items-center gap-1.5 text-slate-400 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCompose(true);
+                  }}
+                  className="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
+                  title="Lampirkan foto bukti"
+                  aria-label="Lampirkan foto bukti"
+                >
+                  <Icon icon="solar:camera-linear" className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCompose(true);
+                  }}
+                  className="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
+                  title="Tautkan nomor telepon"
+                  aria-label="Tautkan nomor telepon"
+                >
+                  <Icon icon="solar:phone-bold-duotone" className="h-4 w-4 text-slate-500" />
+                </button>
+              </div>
             </div>
-          ) : tab === "dangerous" ? (
-            <div className="border-y border-pos-line">
-              <DangerousNumberList numbers={feed.numbers} />
-            </div>
-          ) : feed.posts.length === 0 ? (
-            <div className="grid place-items-center gap-2 border-y border-pos-line bg-pos-card px-6 py-16 text-center">
-              <Icon icon="solar:chat-round-dots-linear" className="h-10 w-10 text-pos-muted" />
-              <p className="text-[15px] font-semibold text-pos-ink">{number ? "Belum ada cerita untuk nomor ini." : "Belum ada cerita di papan ini."}</p>
-              <p className="max-w-[19rem] text-[13px] leading-relaxed text-pos-muted">
-                Cerita pertama tidak membuatnya lebih benar. Setiap cerita butuh bukti gambar dan tetap milik orang yang
-                menulisnya.
-              </p>
-              <button type="button" onClick={() => setCompose(true)} className="mt-2 text-[13px] font-semibold text-pos-action-tua hover:text-pos-ink">
-                Tulis cerita pertama
+          )}
+
+          {/* Active Filter Notice Banner */}
+          {number && (
+            <div className="border-b border-slate-100 p-4 flex items-center justify-between gap-3 bg-slate-50/60 text-left">
+              <div className="min-w-0 text-left">
+                <p className="text-xs font-normal text-slate-500 text-left">
+                  Menampilkan cerita untuk nomor:
+                </p>
+                <NumberHandle number={number} size="md" />
+              </div>
+              <button
+                type="button"
+                onClick={clearFilter}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-normal text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Tampilkan Semua
               </button>
             </div>
+          )}
+
+          {feed.errorMessage && (
+            <div
+              role="alert"
+              className="border-b border-red-200 bg-red-50 p-4 text-xs font-normal text-red-700 text-left"
+            >
+              {feed.errorMessage}
+            </div>
+          )}
+
+          {/* Feed Stream */}
+          {feed.loading ? (
+            <div className="grid place-items-center gap-3 py-24 text-xs font-normal text-slate-500">
+              <Icon
+                icon="solar:restart-linear"
+                className="h-7 w-7 animate-spin text-slate-800"
+              />
+              <span aria-live="polite">Memuat konten komunitas...</span>
+            </div>
+          ) : tab === "dangerous" ? (
+            <DangerousNumberList numbers={feed.numbers} />
+          ) : feed.posts.length === 0 ? (
+            <div className="grid place-items-center gap-3 px-6 py-20 text-center border-b border-slate-100">
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-400">
+                <Icon icon="solar:chat-round-dots-linear" className="h-6 w-6" />
+              </div>
+              <p className="text-sm font-normal text-slate-900">
+                {number
+                  ? "Belum ada cerita untuk nomor ini."
+                  : "Belum ada cerita di papan ini."}
+              </p>
+              <p className="max-w-xs text-xs font-normal leading-relaxed text-slate-500">
+                Jadilah pelopor dengan membagikan bukti dan kronologi agar warga
+                lain dapat lebih waspada.
+              </p>
+            </div>
           ) : (
-            <div className="border-y border-pos-line">
-              {number && (
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-pos-line px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="text-[12px] text-pos-muted">Cerita tentang</p>
-                    <NumberHandle number={number} size="sm" />
-                  </div>
-                  <button type="button" onClick={clearFilter} className="text-[13px] font-semibold text-pos-action-tua transition-colors hover:text-pos-ink">
-                    Lihat semua
-                  </button>
-                </div>
-              )}
-              {feed.posts.map((post) => <PostCard key={post.id} post={post} onVote={feed.vote} />)}
+            <div>
+              {feed.posts.map((post) => (
+                <PostCard key={post.id} post={post} onVote={feed.vote} />
+              ))}
             </div>
           )}
 
           {!feed.loading && feed.hasMore && (
-            <button type="button" onClick={feed.loadMore} disabled={feed.loadingMore}
-              className="w-full border-b border-pos-line bg-pos-card py-4 text-[13px] font-semibold text-pos-action-tua transition-colors hover:text-pos-ink disabled:text-pos-muted">
-              {feed.loadingMore ? "Memuat..." : tab === "dangerous" ? "Muat nomor berikutnya" : "Muat cerita berikutnya"}
+            <button
+              type="button"
+              onClick={feed.loadMore}
+              disabled={feed.loadingMore}
+              className="border-b border-slate-100 py-3.5 text-xs font-normal text-slate-600 hover:bg-slate-50 transition-colors w-full disabled:text-slate-400"
+            >
+              {feed.loadingMore
+                ? "Memuat..."
+                : tab === "dangerous"
+                  ? "Muat Nomor Berikutnya"
+                  : "Muat Cerita Berikutnya"}
             </button>
           )}
 
-          {/* Di bawah xl kolom kanan tidak ada, jadi catatan cara kerja papan ikut di bawah feed. */}
-          <div className="mt-6 xl:hidden">
-            <RuleNotes />
+          {/* Rules fallback for small screen view */}
+          <div className="p-4 lg:hidden">
+            <RuleNotes
+              open={rulesOpen}
+              onToggle={() => setRulesOpen((prev) => !prev)}
+            />
           </div>
-        </div>
+        </main>
 
-        <aside className="hidden w-[340px] shrink-0 self-start pt-3 xl:block">
-          <div className="sticky top-[61px] space-y-5">
-            <RuleNotes />
-
-            <div className="rounded-lg border border-pos-line bg-pos-card px-4 py-3">
-              <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-pos-shell text-pos-muted">
-                  <Icon icon="solar:magnifier-linear" className="h-5 w-5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold text-pos-ink">Pindai dulu nomornya</p>
-                  <p className="mt-0.5 text-[12px] leading-snug text-pos-muted">Mesin menjawab apa yang terdeteksi; papan menjawab apa yang dialami warga.</p>
-                </div>
-                <Link href="/recognize" className="shrink-0 text-[13px] font-semibold text-pos-action-tua transition-colors hover:text-pos-ink">Buka</Link>
-              </div>
+        {/* 3. Right Sticky Sidebar (Distinct Surface Separation, No Search Widget, Accordion Rules, No Redundant Disclaimer) */}
+        <aside className="hidden lg:block w-[320px] xl:w-[350px] shrink-0 sticky top-16 h-fit pt-4 pb-8 px-4 space-y-4 text-left">
+          {/* Distinct Surface Card: Nomor Paling Banyak Dilaporkan */}
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 space-y-3 shadow-2xs text-left">
+            <div className="flex items-center justify-between text-left">
+              <h3 className="text-xs font-semibold text-slate-900 tracking-tight text-left">
+                Nomor Paling Banyak Dilaporkan
+              </h3>
+              <Link
+                href="/community/phone"
+                className="text-[11px] font-normal text-red-600 hover:text-red-700 hover:underline transition-colors"
+              >
+                Lihat Semua &rarr;
+              </Link>
             </div>
-
-            <p className="px-1 text-[11px] leading-relaxed text-pos-muted">
-              Papan ini menyimpan cerita, bukan putusan. Yang menetapkan sebuah nomor berbahaya hanyalah laporan
-              terverifikasi. <Link href="/" className="font-semibold transition-colors hover:text-pos-ink">Halaman pemindaian</Link>
-            </p>
+            <div className="space-y-2.5 text-left">
+              {topNumbers.length === 0 ? (
+                <p className="text-xs font-normal text-slate-400 py-2 text-left">
+                  Belum ada data nomor berisiko.
+                </p>
+              ) : (
+                topNumbers.map((row) => (
+                  <div
+                    key={row.number_e164}
+                    className="flex items-center justify-between text-xs py-1 border-b border-slate-200/60 last:border-0 text-left"
+                  >
+                    <div className="min-w-0 flex-1 text-left">
+                      <NumberHandle number={row.number_e164} size="sm" />
+                      <p className="text-[11px] font-normal text-slate-400 mt-0.5 text-left">
+                        {row.verified_reports} laporan terverifikasi
+                      </p>
+                    </div>
+                    <Link
+                      href={`/recognize/phone/${phoneSlug(row.number_e164)}`}
+                      className="text-[11px] font-normal text-slate-700 hover:text-red-600 px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-red-200 transition-colors shrink-0 shadow-2xs"
+                    >
+                      Cek
+                    </Link>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
+
+          {/* Distinct Surface Card: Panduan Warga (Accordion Style to eliminate cognitive overload) */}
+          <RuleNotes
+            open={rulesOpen}
+            onToggle={() => setRulesOpen((prev) => !prev)}
+          />
         </aside>
       </div>
 
-      <nav aria-label="Navigasi papan" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-pos-line bg-pos-card pb-[env(safe-area-inset-bottom)] lg:hidden">
-        {TABS.map((item) => {
-          const on = tab === item.id;
-          return (
-            <Link key={item.id} href={tabHref(item)} aria-current={on ? "page" : undefined}
-              className={`flex min-w-0 flex-col items-center gap-1 py-2.5 text-[11px] transition-colors ${on ? "font-semibold text-pos-ink" : "text-pos-muted"}`}>
-              <Icon icon={on ? item.active : item.idle} className="h-6 w-6" />
-              <span className="max-w-full truncate">{item.label}</span>
-            </Link>
-          );
-        })}
-        {tab === "dangerous" ? (
-          <button type="button" onClick={() => setReporting(true)} className="flex min-w-0 flex-col items-center gap-1 py-2.5 text-[11px] text-pos-muted">
-            <Icon icon="solar:phone-calling-bold-duotone" className="h-6 w-6" />
-            <span className="max-w-full truncate">Lapor nomor</span>
-          </button>
-        ) : (
-          <button type="button" onClick={() => setCompose(true)} className="flex min-w-0 flex-col items-center gap-1 py-2.5 text-[11px] text-pos-muted">
-            <Icon icon="solar:add-square-linear" className="h-6 w-6" />
-            <span className="max-w-full truncate">Cerita baru</span>
-          </button>
-        )}
+      {/* Mobile Fixed Bottom Navigation Bar */}
+      <nav
+        aria-label="Navigasi Mobile"
+        className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-slate-100 bg-white/95 backdrop-blur-sm py-2 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] md:hidden shadow-lg"
+      >
+        <Link
+          href="/"
+          className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <Icon icon="solar:home-2-linear" className="h-5 w-5" />
+          <span>Beranda</span>
+        </Link>
+        <Link
+          href="/recognize"
+          className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <Icon icon="solar:magnifer-linear" className="h-5 w-5" />
+          <span>Pindai</span>
+        </Link>
+        <Link
+          href="/community/latest"
+          className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-900 transition-colors"
+        >
+          <Icon
+            icon="solar:users-group-two-rounded-linear"
+            className="h-5 w-5"
+          />
+          <span>Komunitas</span>
+        </Link>
+        <button
+          type="button"
+          onClick={() =>
+            tab === "dangerous" ? setReporting(true) : setCompose(true)
+          }
+          className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-700 hover:text-slate-900 transition-colors"
+        >
+          <Icon
+            icon={
+              tab === "dangerous"
+                ? "solar:phone-calling-bold-duotone"
+                : "solar:camera-linear"
+            }
+            className="h-5 w-5"
+          />
+          <span>
+            {tab === "dangerous" ? "Lapor" : "Tulis"}
+          </span>
+        </button>
+        <Link
+          href="/guide"
+          className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <Icon icon="solar:book-2-linear" className="h-5 w-5" />
+          <span>Panduan</span>
+        </Link>
       </nav>
 
-      <CreatePostPanel open={compose} onClose={() => setCompose(false)} onCreated={onCreated} />
-      {reporting && <ReportNumberPanel onClose={() => setReporting(false)} />}
+      <CreatePostPanel
+        open={compose}
+        onClose={() => setCompose(false)}
+        onCreated={onCreated}
+      />
+      {reporting && (
+        <ReportNumberPanel
+          onClose={() => setReporting(false)}
+          onSuccess={onReportSuccess}
+        />
+      )}
 
       {notice && (
-        <p role="status" className="fixed bottom-20 left-1/2 z-40 -translate-x-1/2 rounded-full bg-pos-ink px-4 py-2.5 text-[13px] text-white shadow-lg lg:bottom-6">
-          {notice}
-        </p>
+        <div
+          role="status"
+          className="fixed bottom-20 left-1/2 z-40 -translate-x-1/2 flex items-center gap-3 rounded-full bg-slate-900 py-2.5 pl-5 pr-3 text-xs font-normal text-white shadow-xl md:bottom-6 max-w-[90vw]"
+        >
+          <span className="truncate">{notice.message}</span>
+          {notice.numberSlug && (
+            <Link
+              href={`/recognize/phone/${notice.numberSlug}`}
+              className="inline-flex items-center gap-1 rounded-full bg-white text-slate-900 px-3 py-1 text-[11px] font-medium hover:bg-slate-100 transition-colors shrink-0"
+            >
+              <span>Lihat Hasil Analisis</span>
+              <Icon icon="solar:arrow-right-up-linear" className="h-3 w-3" />
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            className="text-slate-400 hover:text-white p-1 ml-1"
+            aria-label="Tutup notifikasi"
+          >
+            <Icon icon="solar:close-circle-linear" className="h-4 w-4" />
+          </button>
+        </div>
       )}
     </>
   );
 }
 
-function RuleNotes() {
+/**
+ * Community discussion guidelines accordion widget reducing cognitive load.
+ */
+function RuleNotes({
+  open,
+  onToggle,
+}: {
+  open: boolean;
+  onToggle: () => void;
+}) {
   return (
-    <div className="rounded-lg border border-pos-line bg-pos-card px-4 py-3">
-      <p className="text-[13px] font-semibold text-pos-muted">Sebelum menulis</p>
-      <ul className="mt-2.5 space-y-2.5">
-        {RULES.map((rule) => (
-          <li key={rule} className="flex gap-2.5 text-[12px] leading-relaxed text-pos-muted">
-            <span aria-hidden="true" className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-pos-muted/70" />
-            <span>{rule}</span>
-          </li>
-        ))}
-      </ul>
+    <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 space-y-2 shadow-2xs text-left">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between text-left text-xs font-semibold text-slate-900"
+      >
+        <span className="flex items-center gap-2">
+          <Icon icon="solar:shield-warning-linear" className="h-4 w-4 text-red-600" />
+          <span>Panduan Komunitas</span>
+        </span>
+        <Icon
+          icon={open ? "solar:alt-arrow-up-linear" : "solar:alt-arrow-down-linear"}
+          className="h-3.5 w-3.5 text-slate-400"
+        />
+      </button>
+
+      {open && (
+        <ul className="pt-2.5 border-t border-slate-200/60 space-y-2 text-xs font-normal text-slate-600 leading-relaxed text-left animate-in fade-in duration-150">
+          {RULES.map((rule, index) => (
+            <li key={rule} className="flex items-start gap-2 text-left">
+              <span className="text-slate-400 font-mono text-[11px] shrink-0 mt-0.5">
+                {index + 1}.
+              </span>
+              <span className="font-normal text-left">{rule}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

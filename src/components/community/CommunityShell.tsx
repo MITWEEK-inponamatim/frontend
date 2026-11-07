@@ -1,58 +1,36 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
-import { Icon } from "@/components/ui/Icon";
-import { LogoutButton } from "@/components/auth/LogoutButton";
-import type { Account } from "@/components/navbar/Navbar";
-
-const ICON_BUTTON =
-  "grid h-11 w-11 place-items-center rounded-full text-pos-ink transition-colors hover:bg-pos-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pos-action";
+import { Navbar, type Account } from "@/components/navbar/Navbar";
 
 /**
- * The frame around the community board.
- *
- * Deliberately not SiteShell: the landing page is looked at, this page is read, so the board gets a
- * white bar, a hairline, a system typeface and a 470px measure instead of a hero. Nothing here is
- * shared with the marketing pages — the header is 60px tall because the board's sticky rail and
- * bottom bar are measured from it.
+ * Shell frame wrapping the community stories board with universal navbar and footer.
  */
-export function CommunityShell({ account, children }: { account?: Account; children: ReactNode }) {
-  const initial = (account?.name ?? account?.email ?? "?").trim().charAt(0).toUpperCase() || "?";
-
+export function CommunityShell({
+  account,
+  children,
+}: {
+  account?: Account;
+  children: ReactNode;
+}) {
   return (
-    <div className="min-h-screen bg-pos-shell font-pos-ui text-pos-ink">
-      <header className="sticky top-0 z-40 border-b border-pos-line bg-pos-card">
-        <div className="mx-auto flex h-[60px] w-full max-w-[1012px] items-center gap-4 px-4 sm:px-6">
-          <Link href="/community/latest" className="rounded-full px-1 text-[17px] font-semibold tracking-tight text-pos-ink">
-            Papan Warga
-          </Link>
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col justify-between">
+      <div className="w-full bg-white border-b border-slate-100 pb-3">
+        <Navbar account={account} />
+      </div>
 
-          <nav aria-label="Akun" className="ml-auto flex items-center gap-1">
-            <Link href="/recognize" className={ICON_BUTTON} aria-label="Pindai nomor">
-              <Icon icon="solar:magnifier-linear" className="h-6 w-6" />
-            </Link>
+      <main className="w-full flex-1">{children}</main>
 
-            {account && (
-              <>
-                <span className="hidden max-w-[11rem] truncate pr-1 text-[13px] text-pos-muted md:block" title={account.email}>
-                  {account.email}
-                </span>
-                <span className="hidden h-6 w-px bg-pos-line md:block" aria-hidden="true" />
-                {account.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- remote Google avatar, sized and non-interactive
-                  <img src={account.avatarUrl} alt="" width={32} height={32} referrerPolicy="no-referrer" className="ml-1 h-8 w-8 shrink-0 rounded-full object-cover" />
-                ) : (
-                  <span aria-hidden="true" className="ml-1 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-pos-line text-[12px] font-semibold text-pos-muted">
-                    {initial}
-                  </span>
-                )}
-                <LogoutButton className="ml-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold text-pos-ink/70 transition-colors hover:bg-pos-ink/5 hover:text-pos-ink" />
-              </>
-            )}
-          </nav>
+      <footer className="w-full bg-white text-slate-900 px-4 sm:px-8 md:px-12 py-10 border-t border-slate-100 mt-12">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-slate-500 font-normal">
+          <span>Anti-Scam AI Platform • Inisiatif Keamanan Siber 2026</span>
+          <div className="flex items-center gap-4 text-slate-600 font-normal">
+            <span>Recognize</span>
+            <span>•</span>
+            <span>Learn</span>
+            <span>•</span>
+            <span>Act</span>
+          </div>
         </div>
-      </header>
-
-      <main className="w-full">{children}</main>
+      </footer>
     </div>
   );
 }

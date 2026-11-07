@@ -38,7 +38,7 @@ async function CommunityPostContent({ params }: { params: Promise<{ id: string }
 // them in the page body would block prerendering of the whole route.
 export default function CommunityPostPage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <Suspense fallback={<main className="grid min-h-screen place-items-center bg-pos-shell font-pos-ui text-[13px] text-pos-muted">ThreatLens</main>}>
+    <Suspense fallback={<main className="grid min-h-screen place-items-center bg-slate-50 text-[13px] text-slate-500">ThreatLens</main>}>
       <CommunityPostContent params={params} />
     </Suspense>
   );

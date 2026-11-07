@@ -1,36 +1,41 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
 import { api } from "@/lib/api";
 import { messageForError } from "@/hooks/useScanner";
-import { canonicalPhone, phoneInputProblem } from "@/lib/phone";
-import { COMMUNITY_CATEGORIES, EVIDENCE_TYPES, MAX_EVIDENCE_MB, displayNumber, type CommunityCategory } from "@/lib/community";
+import { canonicalPhone, phoneInputProblem, phoneSlug } from "@/lib/phone";
+import {
+  COMMUNITY_CATEGORIES,
+  EVIDENCE_TYPES,
+  MAX_EVIDENCE_MB,
+  displayNumber,
+  type CommunityCategory,
+} from "@/lib/community";
 
-// The cap the API enforces on phone_reports.note.
 const NOTE_MAX = 280;
 
 const FIELD =
-  "w-full rounded-lg border border-pos-line bg-pos-card px-3 py-2 text-[14px] leading-relaxed text-pos-ink placeholder:text-pos-muted focus:border-pos-ink focus:outline-none focus:ring-2 focus:ring-pos-action/40";
-const LABEL = "text-[12px] font-semibold text-pos-ink";
-const SOLID = "rounded-full bg-pos-action px-4 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-pos-action-tua disabled:bg-pos-line disabled:text-pos-muted";
-const GHOST = "text-[14px] font-semibold text-pos-action-tua transition-colors hover:text-pos-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pos-action";
+  "w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm font-normal text-slate-900 placeholder:text-slate-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100 transition-colors";
+const LABEL = "text-xs font-normal text-slate-900";
+const SOLID_BTN =
+  "rounded-full bg-red-600 px-5 py-2 text-xs sm:text-sm font-normal text-white shadow-sm transition-colors hover:bg-red-700 disabled:bg-slate-200 disabled:text-slate-400";
+const GHOST_BTN =
+  "text-sm font-normal text-slate-500 transition-colors hover:text-slate-900";
 
 type ReportResponse = { number_e164?: string; status?: string; note_saved?: boolean };
 
 /**
- * Reporting a number, without leaving the board.
- *
- * This is the one place on /community where a person can change the dangerous list, and it is a
- * different act from writing a story: a report is an allegation with a proof image attached, so it
- * goes to `/api/v1/phone-reports` and waits for a moderator. Nothing here pretends otherwise — the
- * number only reaches the list once two verified reports from two different warga exist, which is
- * why the confirmation says "menunggu moderasi" instead of thanking them for a verdict.
- *
- * Mounted only while open, so the fields always start empty and a finished report cannot be sent a
- * second time by accident.
+ * Modal dialog for reporting suspicious phone numbers with verified evidence attachments.
  */
-export function ReportNumberPanel({ onClose }: { onClose: () => void }) {
+export function ReportNumberPanel({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess?: (report: { number_e164: string; category?: string }) => void;
+}) {
   const [number, setNumber] = useState("");
   const [category, setCategory] = useState<CommunityCategory | "">("");
   const [note, setNote] = useState("");
@@ -71,7 +76,7 @@ export function ReportNumberPanel({ onClose }: { onClose: () => void }) {
   const validate = () => {
     const phoneProblem = phoneInputProblem(number);
     if (phoneProblem) return phoneProblem;
-    if (!category) return "Pilih kategori dulu, supaya moderator tahu nomor ini dilaporkan untuk apa.";
+    if (!category) return "Pilih kategori ancaman terlebih dahulu.";
     if (!evidence) return messageForError("evidence_required");
     if (evidence.size > MAX_EVIDENCE_MB * 1048576) return messageForError("evidence_too_large");
     return "";
@@ -90,7 +95,12 @@ export function ReportNumberPanel({ onClose }: { onClose: () => void }) {
       form.set("note", note.trim());
       form.set("evidence", evidence as File, evidence?.name);
       const response = (await api("/api/v1/phone-reports", { method: "POST", body: form })) as ReportResponse | null;
-      setSent(response ?? { status: "pending" });
+      const result = response ?? { status: "pending" };
+      setSent(result);
+      const targetE164 = result.number_e164 || normalized || number;
+      if (targetE164) {
+        onSuccess?.({ number_e164: targetE164, category: category || undefined });
+      }
     } catch (failure) {
       setProblem(messageForError(failure instanceof Error ? failure.message : null));
     } finally {
@@ -99,146 +109,224 @@ export function ReportNumberPanel({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true" aria-label="Lapor nomor berbahaya">
-      <button type="button" onClick={onClose} aria-label="Tutup form laporan" className="absolute inset-0 bg-pos-ink/70" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true" aria-label="Lapor Nomor Berbahaya">
+      <button type="button" onClick={onClose} aria-label="Tutup form laporan" className="absolute inset-0 bg-slate-950/60" />
 
-      <div className="relative flex max-h-full w-full max-w-[520px] flex-col overflow-hidden rounded-xl bg-pos-card shadow-xl">
-        <header className="flex items-center justify-between gap-3 border-b border-pos-line px-4 py-3">
+      <div className="relative flex max-h-[90vh] w-full max-w-[540px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-100">
+        <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           {sent ? (
-            <span className={GHOST}>Selesai</span>
+            <span className={GHOST_BTN}>Selesai</span>
           ) : (
-            <button type="button" onClick={onClose} className={GHOST}>
-              Batalkan
+            <button type="button" onClick={onClose} className={GHOST_BTN}>
+              Batal
             </button>
           )}
-          <h2 className="truncate text-[14px] font-semibold text-pos-ink">{sent ? "Laporan terkirim" : "Lapor nomor berbahaya"}</h2>
+          <h2 className="text-sm sm:text-base font-normal text-slate-900">
+            {sent ? "Laporan Berhasil Terkirim" : "Lapor Nomor Berbahaya"}
+          </h2>
           {sent ? (
-            <button type="button" onClick={onClose} className={SOLID}>
+            <button type="button" onClick={onClose} className={SOLID_BTN}>
               Tutup
             </button>
           ) : (
-            <button type="button" disabled={sending} onClick={submit} className={SOLID}>
-              {sending ? "Mengirim..." : "Kirim"}
+            <button type="button" disabled={sending} onClick={submit} className={SOLID_BTN}>
+              {sending ? "Mengirim..." : "Kirim Laporan"}
             </button>
           )}
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
           {sent ? (
-            <div className="space-y-3 p-4 sm:p-5">
-              <p className="flex items-start gap-2.5 text-[14px] leading-relaxed text-pos-ink">
-                <Icon icon="solar:check-circle-bold-duotone" className="mt-0.5 h-5 w-5 shrink-0 text-pos-good" />
-                <span>
-                  Laporan{sent.number_e164 ? ` untuk ${displayNumber(sent.number_e164)}` : ""} dan bukti gambar sudah tercatat.
-                  Statusnya <span className="font-semibold">menunggu moderasi</span>
-                  {sent.note_saved === false ? ", dan catatan tambahan Anda tidak tersimpan — laporannya tetap tercatat." : "."}
-                </span>
+            <div className="space-y-4 text-center py-4">
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-50 text-emerald-600">
+                <Icon icon="solar:check-circle-bold-duotone" className="h-8 w-8" />
+              </div>
+              <h3 className="text-base font-normal text-slate-900">
+                Laporan Telah Masuk Antrean Moderasi
+              </h3>
+              <p className="text-xs font-normal leading-relaxed text-slate-600 max-w-sm mx-auto">
+                Laporan untuk nomor <span className="font-normal text-slate-900">{sent.number_e164 ? displayNumber(sent.number_e164) : number}</span> telah kami terima beserta bukti tangkapan layar.
               </p>
-              <p className="text-[12px] leading-relaxed text-pos-muted">
-                Sebuah nomor baru muncul di daftar ini kalau sudah ada dua laporan terverifikasi dari dua warga berbeda.
-                Laporan Anda sendiri belum mengubah daftar, dan tidak ada laporan yang membuktikan seseorang bersalah.
-              </p>
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-left text-xs font-normal leading-relaxed text-slate-500">
+                Nomor akan masuk daftar &apos;Nomor Berbahaya&apos; jika diverifikasi oleh minimal dua laporan dari warga berbeda.
+              </div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+                <Link
+                  href={`/recognize/phone/${phoneSlug(sent.number_e164 || number)}`}
+                  onClick={onClose}
+                  className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-full bg-red-600 px-5 py-2 text-xs font-normal text-white shadow-sm transition-colors hover:bg-red-700"
+                >
+                  <span>Lihat Hasil Analisis Nomor</span>
+                  <Icon icon="solar:arrow-right-up-linear" className="h-3.5 w-3.5" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex w-full sm:w-auto items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-normal text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Tetap di Komunitas
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="space-y-4 p-4 sm:p-5">
+            <div className="space-y-4">
               <div>
-                <label className={LABEL} htmlFor="report-number">Nomor yang dilaporkan</label>
-                <div className="mt-2 flex w-full gap-2">
-                  <span aria-hidden="true" className="grid place-items-center rounded-lg border border-pos-line bg-pos-shell px-3 text-[14px] font-semibold tabular-nums text-pos-muted">+62</span>
-                  <input ref={numberRef} id="report-number" type="tel" value={number} disabled={sending}
-                    onChange={(event) => { setNumber(event.target.value); setProblem(""); }} placeholder="08xx xxxx xxxx"
-                    className={`${FIELD} tabular-nums`} />
+                <label className={LABEL} htmlFor="report-number">
+                  Nomor Telepon yang Dilaporkan
+                </label>
+                <div className="mt-1.5 flex w-full gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="grid place-items-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-normal tabular-nums text-slate-600"
+                  >
+                    +62
+                  </span>
+                  <input
+                    ref={numberRef}
+                    id="report-number"
+                    type="tel"
+                    value={number}
+                    disabled={sending}
+                    onChange={(event) => {
+                      setNumber(event.target.value);
+                      setProblem("");
+                    }}
+                    placeholder="0812 3456 7890"
+                    className={`${FIELD} tabular-nums`}
+                  />
                 </div>
                 {normalized && (
-                  <p className="mt-1 text-[12px] text-pos-muted">
-                    Akan tersimpan sebagai <span className="font-semibold tabular-nums text-pos-ink/80">{normalized}</span>, sama seperti cara halaman pencarian menuliskannya.
+                  <p className="mt-1 text-[11px] font-normal text-slate-500">
+                    Format tersimpan: <span className="font-normal tabular-nums text-slate-700">{normalized}</span>
                   </p>
                 )}
               </div>
 
               <div>
-                <span className={LABEL}>Kategori</span>
+                <span className={LABEL}>Kategori Ancaman</span>
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {COMMUNITY_CATEGORIES.map((item) => (
-                    <button key={item.id} type="button" aria-pressed={category === item.id} disabled={sending}
-                      onClick={() => { setCategory(item.id); setProblem(""); }}
-                      className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors ${
-                        category === item.id ? "border-pos-ink bg-pos-ink text-white" : "border-pos-line text-pos-ink hover:border-pos-ink/50"
-                      }`}>
-                      {item.label}
-                    </button>
-                  ))}
+                  {COMMUNITY_CATEGORIES.map((item) => {
+                    const isSelected = category === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        disabled={sending}
+                        onClick={() => {
+                          setCategory(item.id);
+                          setProblem("");
+                        }}
+                        className={`rounded-full border px-3 py-1 text-xs font-normal transition-colors ${
+                          isSelected
+                            ? "border-red-600 bg-red-600 text-white shadow-sm"
+                            : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
                 </div>
-                <p className="mt-2 text-[12px] leading-relaxed text-pos-muted">
-                  {category ? COMMUNITY_CATEGORIES.find((item) => item.id === category)?.hint : "Telepon telemarketing dan penagihan utang masuk ke Spam."}
-                </p>
               </div>
 
               <div>
-                <span className={LABEL}>Bukti gambar (wajib)</span>
+                <span className={LABEL}>Bukti Tangkapan Layar (Wajib)</span>
                 {preview ? (
-                  <div className="mt-2 flex items-center gap-3 rounded-lg border border-pos-line bg-pos-shell p-2.5">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- a local object URL, shown only to the reporter before upload. */}
-                    <img src={preview} alt="Pratinjau bukti" className="h-16 w-16 shrink-0 rounded-lg border border-pos-line object-cover" />
+                  <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={preview} alt="Pratinjau bukti" className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 object-cover bg-white" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] text-pos-ink">{evidence?.name}</p>
-                      <p className="text-[12px] tabular-nums text-pos-muted">{evidence ? (evidence.size / 1048576).toFixed(2) : "0"} MB dari batas {MAX_EVIDENCE_MB} MB</p>
+                      <p className="truncate text-xs font-normal text-slate-900">{evidence?.name}</p>
+                      <p className="text-[11px] font-normal tabular-nums text-slate-500">
+                        {evidence ? (evidence.size / 1048576).toFixed(2) : "0"} MB dari batas {MAX_EVIDENCE_MB} MB
+                      </p>
                     </div>
-                    <button type="button" onClick={() => { pickEvidence(null); if (fileRef.current) fileRef.current.value = ""; }} aria-label="Hapus bukti gambar"
-                      className="shrink-0 rounded-lg p-2 text-pos-muted transition-colors hover:text-pos-bad focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pos-action">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        pickEvidence(null);
+                        if (fileRef.current) fileRef.current.value = "";
+                      }}
+                      aria-label="Hapus gambar bukti"
+                      className="rounded-lg p-2 text-slate-400 transition-colors hover:text-red-600"
+                    >
                       <Icon icon="solar:trash-bin-trash-bold-duotone" className="h-5 w-5" />
                     </button>
                   </div>
                 ) : (
                   <div
-                    onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setDragging(true);
+                    }}
                     onDragLeave={() => setDragging(false)}
                     onDrop={(event) => {
                       event.preventDefault();
                       setDragging(false);
                       pickEvidence(event.dataTransfer.files?.[0] ?? null);
                     }}
-                    className={`mt-2 grid place-items-center gap-2 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors ${
-                      dragging ? "border-pos-action bg-pos-action/5" : "border-pos-line"
+                    className={`mt-1.5 grid place-items-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+                      dragging ? "border-red-500 bg-red-50/50" : "border-slate-200 bg-slate-50/50 hover:bg-slate-50"
                     }`}
                   >
-                    <Icon icon="solar:gallery-add-bold-duotone" className="h-7 w-7 text-pos-muted" />
-                    <p className="text-[13px] font-semibold text-pos-ink">Seret tangkapan layar ke sini</p>
-                    <button type="button" onClick={() => fileRef.current?.click()} className="text-[13px] font-semibold text-pos-action-tua hover:text-pos-ink">
-                      Pilih dari galeri
+                    <Icon icon="solar:gallery-add-bold-duotone" className="h-7 w-7 text-slate-400" />
+                    <p className="text-xs font-normal text-slate-700">Tarik gambar bukti ke sini atau</p>
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-normal text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+                    >
+                      Pilih dari Galeri
                     </button>
                   </div>
                 )}
-                <p className="mt-2 text-[12px] leading-relaxed text-pos-muted">
-                  Tanpa gambar, laporan tidak terkirim. Yang ikut tampil di hasil pemindaian nomor hanyalah gambarnya,
-                  nama Anda tidak. Sensor dulu wajah, nama lengkap, dan data pribadi lainnya. JPG, PNG, WEBP, atau HEIC,
-                  maksimal {MAX_EVIDENCE_MB} MB.
+                <p className="mt-1 text-[11px] font-normal text-slate-500">
+                  Sensor nama lengkap, NIK, dan nomor rekening pribadi sebelum mengunggah.
                 </p>
               </div>
 
               <div>
                 <div className="flex items-baseline justify-between gap-2">
-                  <label className={LABEL} htmlFor="report-note">Catatan untuk moderator</label>
-                  <span className="text-[11px] tabular-nums text-pos-muted">{note.trim().length}/{NOTE_MAX}</span>
+                  <label className={LABEL} htmlFor="report-note">
+                    Catatan Tambahan untuk Moderator
+                  </label>
+                  <span className="text-[11px] font-normal tabular-nums text-slate-400">
+                    {note.trim().length}/{NOTE_MAX}
+                  </span>
                 </div>
-                <textarea id="report-note" rows={3} maxLength={NOTE_MAX} value={note} disabled={sending}
-                  onChange={(event) => { setNote(event.target.value); setProblem(""); }}
-                  placeholder="Misalnya isi pesan yang diterima dan jamnya. Jangan tulis data pribadi orang lain."
-                  className={`${FIELD} mt-2 resize-none`} />
+                <textarea
+                  id="report-note"
+                  rows={3}
+                  maxLength={NOTE_MAX}
+                  value={note}
+                  disabled={sending}
+                  onChange={(event) => {
+                    setNote(event.target.value);
+                    setProblem("");
+                  }}
+                  placeholder="Ceritakan pesan yang diterima atau waktu panggilan berlangsung."
+                  className={`${FIELD} mt-1.5 resize-none`}
+                />
               </div>
 
-              {problem && <p role="alert" className="text-[13px] leading-relaxed text-pos-bad">{problem}</p>}
-
-              <p className="text-[12px] leading-relaxed text-pos-muted">
-                Satu laporan per nomor per akun. Laporan tidak menghapus nomor mana pun dan tidak mengubah hasil
-                pemindaian nomor itu — yang mengubah daftar hanyalah laporan yang sudah diverifikasi.
-              </p>
+              {problem && (
+                <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-normal text-red-700">
+                  {problem}
+                </div>
+              )}
             </div>
           )}
 
-          <input ref={fileRef} id="report-evidence" type="file" accept={EVIDENCE_TYPES} disabled={sending}
+          <input
+            ref={fileRef}
+            id="report-evidence"
+            type="file"
+            accept={EVIDENCE_TYPES}
+            disabled={sending}
             onChange={(event) => pickEvidence(event.target.files?.[0] ?? null)}
-            className="hidden" />
+            className="hidden"
+          />
         </div>
       </div>
     </div>
