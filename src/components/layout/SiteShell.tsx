@@ -15,7 +15,17 @@ import { WarningSection } from "@/components/warning/WarningSection";
  * components/community/CommunityShell.tsx with its own type and palette. Anything else that
  * diverges here diverts the pages over time, so keep layout changes in this component.
  */
-export function SiteShell({ account = null, scanner = null }: { account?: Account | null; scanner?: ReactNode }) {
+export function SiteShell({
+  account = null,
+  scanner = null,
+  showEducationalSections = true,
+  children = null,
+}: {
+  account?: Account | null;
+  scanner?: ReactNode;
+  showEducationalSections?: boolean;
+  children?: ReactNode;
+}) {
   return (
     <div className="relative min-h-screen w-full bg-white text-slate-900 overflow-x-hidden flex flex-col justify-between">
       {/* Hero viewport with dedicated side ornaments */}
@@ -23,15 +33,19 @@ export function SiteShell({ account = null, scanner = null }: { account?: Accoun
         <SideOrnaments />
         <Navbar account={account} />
         <div className="relative z-10 flex-1 flex flex-col justify-center">
-          <HeroSection scanner={scanner} />
+          <HeroSection scanner={scanner} hideCategoryTags={!showEducationalSections}>
+            {children}
+          </HeroSection>
         </div>
       </div>
 
-      {/* Content sections under the hero */}
-      <main className="relative z-10 w-full bg-white">
-        <ThreatsSection />
-        <WarningSection />
-      </main>
+      {/* Content sections under the hero (Shown on public landing page) */}
+      {showEducationalSections && (
+        <main className="relative z-10 w-full bg-white">
+          <ThreatsSection />
+          <WarningSection />
+        </main>
+      )}
 
       {/* Minimal footer */}
       <footer className="w-full bg-white text-slate-900 px-4 sm:px-8 md:px-12 py-10 border-t border-gray-100">

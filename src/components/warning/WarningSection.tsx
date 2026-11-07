@@ -1,5 +1,5 @@
 import React from "react";
-import { Icon } from "@/components/ui/Icon";
+import { SuccessToast, InfoToast, ErrorToast } from "@/components/ui/Toast";
 
 export function WarningSection() {
   return (
@@ -94,82 +94,29 @@ export function WarningSection() {
             </p>
           </div>
 
-          {/* Sisi Kanan: Floating Notification Pills dengan Aksen Lime Circle */}
+          {/* Sisi Kanan: Toast Notifications Stack Sesuai Desain */}
           <div className="lg:col-span-6 flex justify-center lg:justify-end order-1 lg:order-2">
             <div className="relative w-full max-w-md flex items-center justify-center py-6">
-              {/* Vibrant Lime Accent Circle di Belakang */}
+              {/* Background Accent Circle */}
               <div
-                className="absolute right-0 top-1/2 -translate-y-1/2 w-52 h-52 sm:w-64 sm:h-64 bg-[#d9f94a] rounded-full z-0"
+                className="absolute right-0 top-1/2 -translate-y-1/2 w-52 h-52 sm:w-64 sm:h-64 bg-slate-100/80 rounded-full z-0 pointer-events-none"
                 aria-hidden="true"
               />
 
-              {/* Floating Pill Cards Stack (seperti di referensi foto) */}
-              <div className="relative z-10 w-full space-y-3.5 pl-4 sm:pl-0">
-                <div className="bg-white/95 backdrop-blur-sm border border-gray-200/90 shadow-lg rounded-2xl p-3.5 sm:p-4 flex items-center justify-between text-left max-w-xs sm:max-w-sm translate-x-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-                      <Icon
-                        icon="solar:danger-triangle-bold-duotone"
-                        className="w-4 h-4"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-slate-900">
-                        Izin SMS Intercept
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        Berkas Undangan.apk
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full">
-                    Bahaya
-                  </span>
-                </div>
-
-                <div className="bg-white/95 backdrop-blur-sm border border-gray-200/90 shadow-lg rounded-2xl p-3.5 sm:p-4 flex items-center justify-between text-left max-w-xs sm:max-w-sm -translate-x-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                      <Icon
-                        icon="solar:link-broken-bold-duotone"
-                        className="w-4 h-4"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-slate-900">
-                        Domain Phishing Terdeteksi
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        bca-verifikasi.biz.id
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full">
-                    Palsu
-                  </span>
-                </div>
-
-                <div className="bg-white/95 backdrop-blur-sm border border-gray-200/90 shadow-lg rounded-2xl p-3.5 sm:p-4 flex items-center justify-between text-left max-w-xs sm:max-w-sm translate-x-1">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                      <Icon
-                        icon="solar:shield-check-bold-duotone"
-                        className="w-4 h-4"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-slate-900">
-                        Perlindungan Rekening
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        Pemblokiran Otomatis
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-                    Aman
-                  </span>
-                </div>
+              {/* Toast Notifications Stack */}
+              <div className="relative z-10 w-full space-y-3.5">
+                <SuccessToast
+                  title="Perlindungan Real-Time Aktif"
+                  description="Sistem otomatis berhasil mengamankan akses data & rekening"
+                />
+                <InfoToast
+                  title="Domain Phishing Terdeteksi"
+                  description="Alamat bca-verifikasi.biz.id masuk dalam daftar pemblokiran"
+                />
+                <ErrorToast
+                  title="Izin SMS Intercept Berbahaya"
+                  description="Berkas Undangan-Pernikahan.apk mencoba membaca kode OTP"
+                />
               </div>
             </div>
           </div>

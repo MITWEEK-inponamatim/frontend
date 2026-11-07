@@ -1,3 +1,5 @@
+import { phoneSlug } from "@/lib/phone";
+
 // Where a `next=` parameter is allowed to send a signed-in user. Both the proxy and the OAuth
 // callback read this value from the query string, so they share one rule instead of two that can
 // drift apart. Anything else falls back to /recognize.
@@ -8,7 +10,7 @@ const COMMUNITY_TAB = /^\/community\/(latest|popular|phone)$/;
 // One finished check of a link or an APK, addressed by its scan id: that is what the history list
 // links to, so a round trip through the login page has to keep it.
 const SCAN_RESULT = new RegExp(`^/recognize/(url|apk)/${UUID}$`);
-const ALLOWED = ["/", "/recognize", "/history", "/community"];
+const ALLOWED = ["/", "/recognize", "/history", "/community", "/learn", "/guide"];
 
 const SCAN_ID = new RegExp(`^${UUID}$`);
 
@@ -18,19 +20,25 @@ export function isScanId(value: string) {
   return SCAN_ID.test(value);
 }
 
-// The address a finished check lives at. A phone check has none: its verdict is filed under the
-// number, not the scan, so a phone row in the history list stays where it is.
-export function scanResultPath(type: string, id: string) {
+/**
+ * Resolves the target result URL for a scan record.
+ * URLs and APKs map to their scan ID, while phone scans map to their canonical slug.
+ *
+ * @param type - Scan target kind: "url", "application", or "phone".
+ * @param id - Unique scan UUID.
+ * @param inputRef - Original input reference (e.g. phone number string).
+ */
+export function scanResultPath(type: string, id: string, inputRef?: string | null) {
   if (type === "url") return `/recognize/url/${id}`;
   if (type === "application") return `/recognize/apk/${id}`;
+  if (type === "phone" && inputRef) {
+    const slug = phoneSlug(inputRef);
+    if (slug) return `/recognize/phone/${slug}`;
+  }
   return null;
 }
 
 export function safeNext(path: string | null | undefined) {
   if (!path || !path.startsWith("/") || path.startsWith("//")) return "/recognize";
-  // A number page keeps its own address through the login round-trip: it is a search result
-  // somebody may have linked, and dropping it to /recognize would lose the question. A community
-  // story is the same kind of link — somebody else's sentence about one number — and so is a tab,
-  // which is now an address of its own.
   return ALLOWED.includes(path) || PHONE_PAGE.test(path) || COMMUNITY_POST.test(path) || COMMUNITY_TAB.test(path) || SCAN_RESULT.test(path) ? path : "/recognize";
 }

@@ -11,7 +11,15 @@ const PHRASES = [
   "struk transfer palsu.",
 ];
 
-export function HeroSection({ scanner = null }: { scanner?: React.ReactNode }) {
+export function HeroSection({
+  scanner = null,
+  children = null,
+  hideCategoryTags = false,
+}: {
+  scanner?: React.ReactNode;
+  children?: React.ReactNode;
+  hideCategoryTags?: boolean;
+}) {
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -57,29 +65,34 @@ export function HeroSection({ scanner = null }: { scanner?: React.ReactNode }) {
         {/* Recognize Action Area */}
         {scanner ?? <RecognizeCard />}
 
+        {/* Optional Workspace Additions (e.g. Recent History Card) */}
+        {children}
+
         {/* Bottom Category Tags */}
-        <div className="mt-10 sm:mt-12 text-center">
-          <p className="text-xs text-slate-400 font-normal mb-3">
-            Analisis heuristik cerdas untuk berbagai skenario kejahatan siber:
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-600 font-normal">
-            <span className="hover:text-slate-900 transition-colors">
-              APK Sniffer SMS
-            </span>
-            <span className="text-slate-300">•</span>
-            <span className="hover:text-slate-900 transition-colors">
-              Phishing Perbankan
-            </span>
-            <span className="text-slate-300">•</span>
-            <span className="hover:text-slate-900 transition-colors">
-              Struk Transfer Palsu
-            </span>
-            <span className="text-slate-300">•</span>
-            <span className="hover:text-slate-900 transition-colors">
-              Undian & Undangan Fiktif
-            </span>
+        {!hideCategoryTags && (
+          <div className="mt-10 sm:mt-12 text-center">
+            <p className="text-xs text-slate-400 font-normal mb-3">
+              Analisis heuristik cerdas untuk berbagai skenario kejahatan siber:
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-600 font-normal">
+              <span className="hover:text-slate-900 transition-colors">
+                APK Sniffer SMS
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="hover:text-slate-900 transition-colors">
+                Phishing Perbankan
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="hover:text-slate-900 transition-colors">
+                Struk Transfer Palsu
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="hover:text-slate-900 transition-colors">
+                Undian & Undangan Fiktif
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
