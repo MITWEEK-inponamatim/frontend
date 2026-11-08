@@ -92,34 +92,34 @@ export function ScanResultPanel({
       {/* 1. Verdict & System Confidence (End-to-End layout with Highlight Badges) */}
       <div className="space-y-2 text-left">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
-          {/* Vonis with Highlight Pill */}
-          <div className="flex items-center gap-2.5">
-            <span className="text-sm font-normal text-slate-600">Vonis:</span>
+          {/* Vonis: Text-only without background span AI slop */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-normal text-slate-500">Vonis:</span>
             <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+              className={`text-sm font-bold tracking-wide ${
                 isHighRisk
-                  ? "bg-red-50 text-[#FF3B30] border border-red-200/60"
+                  ? "text-red-600"
                   : isMediumRisk
-                    ? "bg-amber-50 text-[#FF9500] border border-amber-200/60"
+                    ? "text-amber-600"
                     : isSafe
-                      ? "bg-emerald-50 text-[#34C759] border border-emerald-200/60"
-                      : "bg-slate-100 text-slate-700 border border-slate-200/60"
+                      ? "text-emerald-600"
+                      : "text-slate-600"
               }`}
             >
               {isHighRisk
-                ? "Bahaya — ancaman terkonfirmasi"
+                ? "BAHAYA"
                 : isMediumRisk
-                  ? "Peringatan — pola mencurigakan"
+                  ? "WASPADA"
                   : isSafe
-                    ? "Bersih — tidak ditemukan indikasi bahaya"
-                    : "Bukti belum cukup"}
+                    ? "AMAN"
+                    : "BUKTI BELUM CUKUP"}
             </span>
           </div>
 
-          {/* Keyakinan Sistem with Highlight Pill */}
-          <div className="flex items-center gap-2 text-xs font-normal text-slate-600">
+          {/* Keyakinan Sistem: Clean text */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <span>Keyakinan sistem:</span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200/60 capitalize">
+            <span className="font-semibold text-slate-800 capitalize">
               {result.risk?.confidence === "high"
                 ? "Tinggi"
                 : result.risk?.confidence === "medium"
