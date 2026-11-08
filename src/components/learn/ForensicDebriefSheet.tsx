@@ -32,6 +32,8 @@ export function ForensicDebriefSheet({
 
   const isBreached = status === "breached";
   const forensics = scenario.forensicSummary ?? {
+    socialEngineeringTactic: "Rekayasa sosial dan manipulasi psikologis penipuan digital",
+    forensicTabTitle: "Analisis Forensik Ancaman",
     targetLabel: scenario.id === "tarif-bank-phishing" ? "Target / Alamat URL" : "Nama Berkas",
     targetValue:
       scenario.id === "tarif-bank-phishing"
@@ -56,19 +58,19 @@ export function ForensicDebriefSheet({
     officialProcedure:
       scenario.id === "tarif-bank-phishing"
         ? "Bank BCA tidak pernah membagikan tautan formulir pembatalan tarif melalui pesan instan WhatsApp"
-        : "Ekspedisi resmi (J&T, JNE, SiCepat) tidak pernah mengirim berkas APK kepada pelanggan",
+        : "Lembaga resmi tidak pernah mengirimkan berkas aplikasi APK atau menuntut transfer di luar kanal resmi",
     psychologicalPressure:
       scenario.id === "tarif-bank-phishing"
         ? "Ancaman auto-debit Rp 150.000/bulan sebelum pukul 17:00 WIB (Loss Aversion)"
-        : "Ancaman retur paket dan denda pembatalan COD jika tidak dicek (False Urgency)",
+        : "Manipulasi urgensi dan tekanan emosional buatan (False Urgency)",
     decisionPointBreached:
       scenario.id === "tarif-bank-phishing"
         ? "Menyerahkan data nomor kartu ATM dan PIN di formulir web palsu"
-        : "Menyetujui instalasi berkas .apk dari luar kanal resmi",
+        : "Menyetujui eksekusi atau transfer ke rekening perorangan",
     decisionPointSafe:
       scenario.id === "tarif-bank-phishing"
         ? "Menolak membuka link dan memilih verifikasi ke Halo BCA 1500888"
-        : "Menolak eksekusi file dan memverifikasi nomor resi secara mandiri",
+        : "Menolak eksekusi dan memverifikasi keabsahan melalui kanal resmi",
   };
 
   return (
@@ -163,9 +165,7 @@ export function ForensicDebriefSheet({
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              {scenario.id === "tarif-bank-phishing"
-                ? "Analisis Forensik Phishing Web"
-                : "Analisis Forensik APK"}
+              {forensics.forensicTabTitle ?? "Analisis Forensik Ancaman"}
             </button>
           </div>
 
@@ -177,9 +177,7 @@ export function ForensicDebriefSheet({
                   Taktik Rekayasa Sosial
                 </span>
                 <span className="text-slate-900 sm:text-right leading-relaxed">
-                  {scenario.id === "tarif-bank-phishing"
-                    ? "Mengaku sebagai Customer Service resmi BCA Priority (Pretexting)"
-                    : "Pura-pura menjadi kurir ekspedisi berdalih resi basah (Pretexting)"}
+                  {forensics.socialEngineeringTactic}
                 </span>
               </div>
 

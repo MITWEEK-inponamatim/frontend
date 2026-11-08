@@ -51,7 +51,9 @@ export function VictoryOverlay({
             </span>
           </div>
           <p className="text-xs font-normal text-slate-600 leading-relaxed">
-            Anda berhasil menggagalkan manipulasi psikologis pelaku kurir palsu dengan mendeteksi kejanggalan format berkas dan menolak instalasi di luar kanal resmi.
+            {scenario?.forensicSummary?.decisionPointSafe
+              ? `Anda berhasil menggagalkan manipulasi psikologis pelaku dengan ${scenario.forensicSummary.decisionPointSafe.toLowerCase()}.`
+              : "Anda berhasil menggagalkan manipulasi psikologis pelaku dengan mendeteksi kejanggalan dan menolak transaksi di luar kanal resmi."}
           </p>
         </div>
 
@@ -76,7 +78,7 @@ export function VictoryOverlay({
 
         {/* Core Insight */}
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-normal text-slate-700 leading-relaxed">
-          <span className="font-normal text-slate-900">Fakta Kunci Ekspedisi Resmi: </span>
+          <span className="font-normal text-slate-900">Fakta Kunci Keamanan: </span>
           {data.keyInsight}
         </div>
 
@@ -95,7 +97,7 @@ export function VictoryOverlay({
             </Link>
 
             <Link
-              href={`/recognize/phone/${scenario?.personaPhone ? "6282148291029" : "6282148291029"}`}
+              href={`/recognize/phone/${scenario?.personaPhone ? scenario.personaPhone.replace(/[^0-9]/g, "") : "6282148291029"}`}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-normal text-slate-700 hover:bg-slate-50 transition-colors text-center"
             >
               <Icon icon="solar:magnifier-linear" className="h-4 w-4 shrink-0" />

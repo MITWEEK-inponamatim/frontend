@@ -59,6 +59,8 @@ export type VictoryData = {
 };
 
 export type ForensicSummary = {
+  socialEngineeringTactic: string;
+  forensicTabTitle?: string;
   targetLabel: string;
   targetValue: string;
   threatClassification: string;
@@ -292,6 +294,8 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
         "🛡️ Upaya penipuan berhasil digagalkan. Serangan APK ditangkal tanpa kebocoran data.",
     },
     forensicSummary: {
+      socialEngineeringTactic: "Pura-pura menjadi kurir ekspedisi berdalih resi basah/rusak (Pretexting)",
+      forensicTabTitle: "Analisis Forensik Berkas APK",
       targetLabel: "Nama Berkas Trojan",
       targetValue: "LIHAT_Foto_Paket.apk (4.2 MB)",
       threatClassification: "Android SMS Sniffer Trojan (Tingkat Risiko: 85%)",
@@ -501,6 +505,8 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
         "🛡️ Upaya phishing perbankan berhasil digagalkan. Rekening tabungan dan PIN m-Banking Anda 100% aman terlindungi.",
     },
     forensicSummary: {
+      socialEngineeringTactic: "Menyamar sebagai Customer Service resmi BCA Priority mengabarkan kenaikan tarif (Authority & Pretexting)",
+      forensicTabTitle: "Analisis Forensik Web Phishing",
       targetLabel: "Target / Alamat URL",
       targetValue: "https://bca-pembaruan-tarif.info/batal-tarif",
       threatClassification: "Credential Harvesting Web Phishing (Tingkat Risiko: 92%)",
@@ -720,6 +726,8 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
         "🛡️ Serangan Trojan Aksesibilitas berhasil digagalkan. Ponsel, data kontak, dan rekening Anda tetap aman terlindungi.",
     },
     forensicSummary: {
+      socialEngineeringTactic: "Menyamar sebagai teman lama mengundang ke resepsi pernikahan digital (Familiarity & Pretexting)",
+      forensicTabTitle: "Analisis Forensik Berkas APK",
       targetLabel: "Nama Berkas Trojan",
       targetValue: "Surat_Undangan_Pernikahan.apk (4.8 MB)",
       threatClassification: "Android Accessibility Trojan & SMS Sniffer (Tingkat Risiko: 94%)",
@@ -947,6 +955,8 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
         "🛡️ Upaya pemerasan pinjol ilegal berhasil ditangkal. Uang Anda selamat dan pelaku gagal menjerat Anda dalam lingkaran utang fiktif.",
     },
     forensicSummary: {
+      socialEngineeringTactic: "Mengaku salah transfer uang lalu melakukan intimidasi & ancaman doxxing kontak (Coercion & Extortion)",
+      forensicTabTitle: "Analisis Forensik Pinjol Ilegal",
       targetLabel: "Rekening Penampung Penagih",
       targetValue: "Bank Mandiri 132-0091-882-192 an Hendro Wijaya",
       threatClassification: "Extortion & Illegal Loan Shark Debt Trap (Tingkat Risiko: 96%)",
@@ -1186,6 +1196,8 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
         "🛡️ Serangan malware ETLE berhasil digagalkan. Data ponsel dan rekening bank Anda 100% aman terlindungi.",
     },
     forensicSummary: {
+      socialEngineeringTactic: "Menyamar sebagai kepolisian lalu lintas dengan ancaman pemblokiran STNK Samsat (Authority & Intimidation)",
+      forensicTabTitle: "Analisis Forensik Berkas APK",
       targetLabel: "Nama Berkas Malware",
       targetValue: "Surat_Tilang_ETLE.apk (5.1 MB)",
       threatClassification: "Android SMS Sniffer Trojan & Police Impersonation (Tingkat Risiko: 95%)",
@@ -1458,6 +1470,8 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
         "🛡️ Upaya penipuan task scam berhasil digagalkan. Tabungan Anda aman dari skema deposit bodong bertingkat.",
     },
     forensicSummary: {
+      socialEngineeringTactic: "Menawarkan pekerjaan paruh waktu mudah (like/subscribe) dengan komisi bertahap lalu deposit trap (Foot-in-the-Door)",
+      forensicTabTitle: "Analisis Forensik Task Scam",
       targetLabel: "Platform & Rekening Penampung",
       targetValue: "PT Media Kreasi Bersama (BCA 829-0192-381) & Bot Telegram Task",
       threatClassification: "Ponzi Task Scam & Advanced Fee Fraud (Tingkat Risiko: 94%)",
@@ -1685,6 +1699,8 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
         "🛡️ Upaya penipuan hadiah fiktif berhasil digagalkan. Uang Anda selamat dari modus tebusan giveaway palsu.",
     },
     forensicSummary: {
+      socialEngineeringTactic: "Memberikan kabar palsu menang undian smartphone lalu meminta transfer biaya pajak hadiah (Advance Fee Fraud)",
+      forensicTabTitle: "Analisis Forensik Modus Undian",
       targetLabel: "Rekening Bendahara Gadungan",
       targetValue: "Bank BRI 0281-01-09283-502 an Ahmad Santoso",
       threatClassification: "Advance Fee Fraud & Lottery Scam (Tingkat Risiko: 93%)",
@@ -1957,6 +1973,8 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
         "🛡️ Upaya penipuan titip dana kripto bodong berhasil digagalkan. Tabungan Anda aman dari jeratan skema Ponzi.",
     },
     forensicSummary: {
+      socialEngineeringTactic: "Flexing kekayaan fiktif dan menjanjikan keuntungan pasti 15%/hari tanpa risiko rugi (Pig Butchering Scam)",
+      forensicTabTitle: "Analisis Forensik Investasi Bodong",
       targetLabel: "Platform Trading & Dompet Penampung",
       targetValue: "crypto-asset-global.xyz & Rekening BCA an Kevin Pratama",
       threatClassification: "Pig Butchering Crypto Scam & Illegal Investment (Tingkat Risiko: 97%)",

@@ -47,10 +47,10 @@ export function BreachOverlay({
           <div className="flex items-center justify-between text-[11px] font-normal text-red-800">
             <span className="flex items-center gap-1.5">
               <Icon icon="solar:chat-round-dots-linear" className="h-4 w-4" />
-              <span>SMS Masuk Yang Berhasil Disadap Pelaku:</span>
+              <span>Bukti / Akses Yang Berhasil Diambil Pelaku:</span>
             </span>
             <span className="rounded-full bg-red-200/80 px-2 py-0.2 text-[9px] font-normal text-red-900">
-              SNIFFER AKTIF
+              TEREKSPLOITASI
             </span>
           </div>
           <p className="rounded-lg border border-red-200 bg-white p-2.5 font-mono text-xs text-red-950 leading-relaxed">
@@ -73,18 +73,20 @@ export function BreachOverlay({
           <div className="space-y-2 text-[11px] leading-relaxed text-slate-600">
             <div className="rounded-lg bg-white p-2.5 border border-slate-100">
               <span className="font-normal text-red-700">
-                1. Pretexting (Pura-pura Menolong):
+                1. Taktik Rekayasa Sosial:
               </span>
               <p className="mt-0.5">
-                Pelaku membangun simpati dengan menyamar sebagai kurir yang kesulitan membaca resi yang sobek/basah, sehingga meminta konfirmasi foto.
+                {scenario?.forensicSummary?.socialEngineeringTactic ??
+                  "Pelaku membangun manipulasi psikologis untuk memancing korban menyerahkan akses atau dana."}
               </p>
             </div>
             <div className="rounded-lg bg-white p-2.5 border border-slate-100">
               <span className="font-normal text-red-700">
-                2. False Urgency (Ancaman Retur &amp; Denda):
+                2. Manipulasi Urgensi &amp; Tekanan Emosional:
               </span>
               <p className="mt-0.5">
-                Pelaku menekan psikologis dengan batas waktu jam 15:00 dan ancaman denda marketplace agar korban panik dan buru-buru memasang berkas APK.
+                {scenario?.forensicSummary?.psychologicalPressure ??
+                  "Pelaku menekan psikologis dengan batas waktu buatan agar korban panik dan buru-buru mengambil keputusan fatal."}
               </p>
             </div>
           </div>
