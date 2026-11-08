@@ -96,8 +96,8 @@ export function ForensicDebriefSheet({
               </h3>
               <p className="mt-0.5 text-[11px] font-normal text-slate-500 leading-tight">
                 {isBreached
-                  ? `${scenario.breachOutcome.drainAmount} dialihkan via penyadapan SMS OTP`
-                  : "Modus kurir APK berhasil ditangkal tanpa kebocoran data"}
+                  ? `${scenario.breachOutcome.drainAmount} dialihkan melalui rekayasa sosial`
+                  : `${scenario.threatTarget} berhasil ditangkal tanpa kebocoran data`}
               </p>
             </div>
           </div>
@@ -124,7 +124,9 @@ export function ForensicDebriefSheet({
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Analisis Forensik APK
+              {scenario.id === "tarif-bank-phishing"
+                ? "Analisis Forensik Phishing Web"
+                : "Analisis Forensik APK"}
             </button>
           </div>
 
@@ -136,7 +138,9 @@ export function ForensicDebriefSheet({
                   Taktik Rekayasa Sosial
                 </span>
                 <span className="text-slate-900 sm:text-right leading-relaxed">
-                  Pura-pura menjadi kurir ekspedisi berdalih resi basah (Pretexting)
+                  {scenario.id === "tarif-bank-phishing"
+                    ? "Mengaku sebagai Customer Service resmi BCA Priority (Pretexting)"
+                    : "Pura-pura menjadi kurir ekspedisi berdalih resi basah (Pretexting)"}
                 </span>
               </div>
 
@@ -145,7 +149,9 @@ export function ForensicDebriefSheet({
                   Manipulasi Urgensi
                 </span>
                 <span className="text-slate-900 sm:text-right leading-relaxed">
-                  Ancaman retur paket dan denda pembatalan COD jika tidak dicek (False Urgency)
+                  {scenario.id === "tarif-bank-phishing"
+                    ? "Ancaman auto-debit Rp 150.000/bulan sebelum pukul 17:00 WIB (Loss Aversion)"
+                    : "Ancaman retur paket dan denda pembatalan COD jika tidak dicek (False Urgency)"}
                 </span>
               </div>
 
@@ -159,17 +165,23 @@ export function ForensicDebriefSheet({
                   }`}
                 >
                   {isBreached
-                    ? "Menyetujui instalasi berkas .apk dari luar kanal resmi"
-                    : "Menolak eksekusi file dan memverifikasi nomor resi secara mandiri"}
+                    ? scenario.id === "tarif-bank-phishing"
+                      ? "Menyerahkan data nomor kartu ATM dan PIN di formulir web palsu"
+                      : "Menyetujui instalasi berkas .apk dari luar kanal resmi"
+                    : scenario.id === "tarif-bank-phishing"
+                      ? "Menolak membuka link dan memilih verifikasi ke Halo BCA 1500888"
+                      : "Menolak eksekusi file dan memverifikasi nomor resi secara mandiri"}
                 </span>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 p-3.5 text-xs font-normal">
                 <span className="text-slate-500 shrink-0 sm:w-44">
-                  SOP Ekspedisi Resmi
+                  Prosedur Resmi Instansi
                 </span>
                 <span className="text-slate-900 sm:text-right leading-relaxed">
-                  Ekspedisi resmi (J&amp;T, JNE, SiCepat) tidak pernah mengirim berkas APK kepada pelanggan
+                  {scenario.id === "tarif-bank-phishing"
+                    ? "Bank BCA tidak pernah membagikan tautan formulir pembatalan tarif melalui pesan instan WhatsApp"
+                    : "Ekspedisi resmi (J&T, JNE, SiCepat) tidak pernah mengirim berkas APK kepada pelanggan"}
                 </span>
               </div>
             </div>
@@ -177,10 +189,14 @@ export function ForensicDebriefSheet({
             <div className="overflow-hidden rounded-2xl bg-white shadow-2xs divide-y divide-slate-100">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 p-3.5 text-xs font-normal">
                 <span className="text-slate-500 shrink-0 sm:w-44">
-                  Nama Berkas
+                  {scenario.id === "tarif-bank-phishing"
+                    ? "Target / Alamat URL"
+                    : "Nama Berkas"}
                 </span>
                 <span className="font-mono text-slate-900 sm:text-right">
-                  LIHAT_Foto_Paket.apk (4.2 MB)
+                  {scenario.id === "tarif-bank-phishing"
+                    ? "https://bca-pembaruan-tarif.info/batal-tarif"
+                    : "LIHAT_Foto_Paket.apk (4.2 MB)"}
                 </span>
               </div>
 
@@ -189,16 +205,22 @@ export function ForensicDebriefSheet({
                   Klasifikasi Ancaman
                 </span>
                 <span className="text-[#FF3B30] sm:text-right leading-relaxed">
-                  Android SMS Sniffer Trojan (Tingkat Risiko: 85%)
+                  {scenario.id === "tarif-bank-phishing"
+                    ? "Credential Harvesting Web Phishing (Tingkat Risiko: 92%)"
+                    : "Android SMS Sniffer Trojan (Tingkat Risiko: 85%)"}
                 </span>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 p-3.5 text-xs font-normal">
                 <span className="text-slate-500 shrink-0 sm:w-44">
-                  Izin Berbahaya (Permissions)
+                  {scenario.id === "tarif-bank-phishing"
+                    ? "Kredensial yang Diincar"
+                    : "Izin Berbahaya (Permissions)"}
                 </span>
                 <span className="font-mono text-[11px] text-slate-700 sm:text-right leading-relaxed">
-                  RECEIVE_SMS, READ_SMS, INTERNET
+                  {scenario.id === "tarif-bank-phishing"
+                    ? "Nomor Kartu ATM (16 Digit), PIN Mobile Banking, Kode OTP"
+                    : "RECEIVE_SMS, READ_SMS, INTERNET"}
                 </span>
               </div>
 
@@ -207,7 +229,9 @@ export function ForensicDebriefSheet({
                   Dampak Penyerangan
                 </span>
                 <span className="text-slate-900 sm:text-right leading-relaxed">
-                  Malware membaca SMS OTP m-Banking di latar belakang dan mengirimkannya ke penipu
+                  {scenario.id === "tarif-bank-phishing"
+                    ? "Pengambilalihan akun m-Banking secara ilegal dan pengurasan saldo tabungan ke rekening penampung"
+                    : "Malware membaca SMS OTP m-Banking di latar belakang dan mengirimkannya ke penipu"}
                 </span>
               </div>
             </div>
@@ -224,7 +248,7 @@ export function ForensicDebriefSheet({
 
             <div className="grid grid-cols-2 gap-2">
               <Link
-                href="/recognize/phone/6282148291029"
+                href={`/recognize/phone/${scenario.personaPhone.replace(/[^0-9]/g, "")}`}
                 className="flex items-center justify-center gap-1.5 rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-xs font-normal text-slate-700 hover:bg-slate-50 transition-colors text-center"
               >
                 <span>Cek di Scanner</span>

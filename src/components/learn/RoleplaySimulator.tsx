@@ -54,23 +54,27 @@ export function RoleplaySimulator({
     if (choice.riskLevel === "fatal" || choice.nextStepId === "outcome_breach") {
       setIsTyping(true);
 
-      // Phase 1 (800ms): Android System Security Warning
+      // Phase 1 (800ms): System Security Warning
       setTimeout(() => {
         setIsTyping(false);
         const installMsg: MessageItem = {
           id: `sys_install_${Date.now()}`,
           sender: "system",
-          text: "⚠️ [Sistem Android] Memasang berkas 'LIHAT_Foto_Paket.apk'... Izin sensitif disetujui (Akses SMS & Notifikasi).",
+          text:
+            scenario.breachOutcome.systemWarningText ||
+            "⚠️ [Peringatan Sistem] Terjadi pelanggaran keamanan dan izin sensitif disetujui.",
           time: "13:47",
         };
         setMessages((prev) => [...prev, installMsg]);
 
-        // Phase 2 (2000ms): Intercepted SMS OTP Push Notification
+        // Phase 2 (2000ms): Intercepted SMS OTP or Drain Notification
         setTimeout(() => {
           const smsMsg: MessageItem = {
             id: `sys_sms_${Date.now()}`,
             sender: "system",
-            text: "KODE OTP: 819204. JANGAN BERIKAN KEPADA SIAPAPUN. Transaksi keluar sebesar Rp 4.850.000 ke DANA sedang diproses.",
+            text:
+              scenario.breachOutcome.drainNotificationText ||
+              scenario.breachOutcome.stolenOtp,
             time: "13:47",
           };
           setMessages((prev) => [...prev, smsMsg]);
@@ -80,7 +84,9 @@ export function RoleplaySimulator({
             const goodbyeMsg: MessageItem = {
               id: `persona_goodbye_${Date.now()}`,
               sender: "persona",
-              text: "Baik kak, terima kasih ya.",
+              text:
+                scenario.breachOutcome.scammerExitText ||
+                "Baik kak, terima kasih ya.",
               time: "13:48",
             };
             setMessages((prev) => [...prev, goodbyeMsg]);
@@ -107,7 +113,9 @@ export function RoleplaySimulator({
         const concedeMsg: MessageItem = {
           id: `persona_concede_${Date.now()}`,
           sender: "persona",
-          text: "Yaudah kalau gak mau gapapa kak, paket saya retur ke gudang pusat.",
+          text:
+            scenario.victoryOutcome.scammerConcedeText ||
+            "Yaudah kalau gak mau gapapa kak.",
           time: "13:48",
         };
         setMessages((prev) => [...prev, concedeMsg]);
@@ -118,7 +126,9 @@ export function RoleplaySimulator({
           const victoryMsg: MessageItem = {
             id: `sys_victory_${Date.now()}`,
             sender: "system",
-            text: "🛡️ Upaya penipuan berhasil digagalkan. Serangan APK ditangkal tanpa kebocoran data.",
+            text:
+              scenario.victoryOutcome.defenseNotificationText ||
+              "🛡️ Upaya penipuan berhasil digagalkan tanpa kebocoran data.",
             time: "13:48",
           };
           setMessages((prev) => [...prev, victoryMsg]);

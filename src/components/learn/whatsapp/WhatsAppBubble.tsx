@@ -3,6 +3,24 @@
 import type { MessageItem } from "@/lib/roleplayData";
 import { WhatsAppDocumentCard } from "./WhatsAppDocumentCard";
 
+function formatMessageContent(text: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <span
+          key={index}
+          className="text-[#027EB5] underline cursor-pointer hover:opacity-85 font-mono text-[12px] break-all"
+        >
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+}
+
 /**
  * Individual chat bubble with pixel-perfect WhatsApp tails, timestamps, double ticks,
  * and realistic system narrative banners for security events and SMS OTP notifications.
@@ -97,7 +115,9 @@ export function WhatsAppBubble({
           />
         ) : (
           <div>
-            <p className="font-normal whitespace-pre-wrap">{message.text}</p>
+            <p className="font-normal whitespace-pre-wrap">
+              {formatMessageContent(message.text)}
+            </p>
             <div className="mt-1 flex items-center justify-end gap-1 text-[10px] font-normal text-slate-400">
               <span>{message.time}</span>
               {isOutgoing && (

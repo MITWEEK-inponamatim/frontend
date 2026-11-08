@@ -138,7 +138,7 @@ export function ThreatInspectorModal({
                     Nomor Terindikasi Penipuan
                   </h3>
                   <p className="mt-0.5 text-[11px] font-normal text-slate-500 leading-tight">
-                    18 Laporan Komunitas &middot; Modus Kurir Gadungan
+                    Laporan Warga Terdata &middot; {scenario.categoryBadge}
                   </p>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export function ThreatInspectorModal({
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 p-3.5 text-xs font-normal">
                   <span className="text-slate-500 shrink-0 sm:w-40">Modus Terdata</span>
                   <span className="text-slate-900 sm:text-right leading-relaxed">
-                    Pengiriman malware ekstensi .apk dengan dalih barcode resi sobek/luntur
+                    {scenario.threatTarget}
                   </span>
                 </div>
               </div>
@@ -170,7 +170,7 @@ export function ThreatInspectorModal({
               {/* Action Buttons */}
               <div className="space-y-2 pt-1">
                 <Link
-                  href="/recognize/phone/6282148291029"
+                  href={`/recognize/phone/${scenario.personaPhone.replace(/[^0-9]/g, "")}`}
                   className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#007AFF] py-2.5 px-4 text-xs font-normal text-white hover:bg-[#0066D6] transition-colors shadow-2xs text-center"
                 >
                   <span>Buka Analisis Lengkap di ThreatLens Scanner</span>

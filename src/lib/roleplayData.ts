@@ -44,6 +44,9 @@ export type BreachData = {
   targetAccount: string;
   compromisedData: string[];
   lessonLearned: string;
+  systemWarningText?: string;
+  drainNotificationText?: string;
+  scammerExitText?: string;
 };
 
 export type VictoryData = {
@@ -51,6 +54,8 @@ export type VictoryData = {
   score: number;
   tacticsFoiled: string[];
   keyInsight: string;
+  scammerConcedeText?: string;
+  defenseNotificationText?: string;
 };
 
 export type RoleplayScenarioDetail = {
@@ -251,6 +256,11 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
       ],
       lessonLearned:
         "Berkas foto resi tidak akan pernah berakhiran (.apk). Ekstensi .apk adalah paket aplikasi Android. Jangan pernah mengizinkan install aplikasi dari sumber tidak dikenal (Unknown Sources).",
+      systemWarningText:
+        "⚠️ [Sistem Android] Memasang berkas 'LIHAT_Foto_Paket.apk'... Izin sensitif disetujui (Akses SMS & Notifikasi).",
+      drainNotificationText:
+        "KODE OTP: 819204. JANGAN BERIKAN KEPADA SIAPAPUN. Transaksi keluar sebesar Rp 4.850.000 ke DANA sedang diproses.",
+      scammerExitText: "Baik kak, terima kasih ya.",
     },
     victoryOutcome: {
       headline: "SIMULASI BERHASIL: ANDA TANGKAL SERANGAN KURIR PALSU!",
@@ -262,7 +272,207 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
       ],
       keyInsight:
         "Ekspedisi resmi (J&T, JNE, SiCepat) TIDAK PERNAH mengirimkan file .apk kepada pelanggan untuk melihat resi atau foto paket. Semua pelacakan paket dilakukan di situs atau aplikasi resmi.",
+      scammerConcedeText:
+        "Yaudah kalau gak mau gapapa kak, paket saya retur ke gudang pusat.",
+      defenseNotificationText:
+        "🛡️ Upaya penipuan berhasil digagalkan. Serangan APK ditangkal tanpa kebocoran data.",
+    },
+  },
+
+  "tarif-bank-phishing": {
+    id: "tarif-bank-phishing",
+    code: "SKENARIO 02",
+    title: "Panggilan CS Bank BCA Palsu",
+    personaName: "Sari Wulandari",
+    personaRole: "Customer Service Priority Palsu",
+    personaAvatar: "/avatars/sari.jpg",
+    personaPhone: "+62 813-9820-4102",
+    categoryBadge: "PHISHING BANK",
+    threatTarget: "Kredensial & PIN Mobile Banking",
+    backgroundStory:
+      "Berdasarkan modus kejahatan perbankan paling marak di Indonesia: Penipu mengaku sebagai tim Customer Care Halo BCA, mengumumkan kenaikan tarif transfer antar-bank drastis menjadi Rp 150.000/bulan secara sepihak dan mengarahkan korban ke web form phishing palsu untuk membatalkan.",
+    initialStepId: "step_1",
+    steps: {
+      step_1: {
+        id: "step_1",
+        psychologicalTactic: "Otoritas Palsu & Ancaman Finansial (Authority Pretexting & Loss Aversion)",
+        heuristicTelemetry: {
+          indicatorTitle: "Domain Phishing & Typosquatting (.info)",
+          description:
+            "Link bukan domain resmi bca.co.id atau klikbca.com, melainkan domain pihak ketiga bca-pembaruan-tarif.info yang baru didaftarkan.",
+          riskScore: 92,
+        },
+        messages: [
+          {
+            id: "m1",
+            sender: "persona",
+            text: "Selamat siang Bapak/Ibu nasabah terhormat Bank BCA. Kami dari Customer Care BCA Priority ingin mengonfirmasikan pemberlakuan tarif transfer antar-bank baru sebesar Rp 150.000/bulan yang akan didebit otomatis dari rekening Anda per malam ini.",
+            time: "14:15",
+          },
+          {
+            id: "m2",
+            sender: "persona",
+            text: "Apabila Bapak/Ibu keberatan dan memilih tetap menggunakan tarif normal Rp 6.500 per transaksi, mohon segera mengisi Formulir Pembatalan sebelum pukul 17:00 WIB melalui link resmi kami: https://bca-pembaruan-tarif.info/batal-tarif",
+            time: "14:16",
+          },
+          {
+            id: "m3",
+            sender: "persona",
+            text: "Jika melewati batas waktu pukul 17:00 WIB formulir belum diterima, sistem menganggap Anda setuju dan saldo rekening akan otomatis dipotong Rp 150.000 setiap awal bulan. Terima kasih.",
+            time: "14:16",
+          },
+        ],
+        choices: [
+          {
+            id: "c1_safe",
+            label: "Konfirmasi ke Halo BCA 1500888",
+            actionText:
+              "BCA tidak pernah mengubah tarif menjadi Rp150.000/bulan dan tidak pernah membagikan link formulir via chat WhatsApp pribadi. Saya akan konfirmasi ke Halo BCA 1500888.",
+            riskLevel: "safe",
+            nextStepId: "step_2_confront",
+            tacticsRevealed: ["Verifikasi Kanal Resmi 1500888", "Menolak Membuka Link Eksternal"],
+          },
+          {
+            id: "c1_inq",
+            label: "Tanya Mengapa Diberitahu Mendadak",
+            actionText:
+              "Kenapa pemberitahuannya mendadak begini ya Bu? Kenapa tidak ada notifikasi resmi di aplikasi myBCA atau BCA mobile saya?",
+            riskLevel: "inquisitive",
+            nextStepId: "step_2_persuade",
+            tacticsRevealed: ["Mempertanyakan Prosedur", "Mengecek Validitas Notifikasi Resmi"],
+          },
+          {
+            id: "c1_fatal",
+            label: "Panik & Buka Link Pembatalan",
+            actionText:
+              "Mahal sekali Rp150.000 per bulan! Saya tidak setuju dipotong otomatis. Saya buka linknya sekarang untuk isi formulir pembatalan ya Bu.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+      step_2_confront: {
+        id: "step_2_confront",
+        psychologicalTactic: "Menciptakan Urgensi Palsu & Menghalangi Kanal Resmi",
+        heuristicTelemetry: {
+          indicatorTitle: "Manipulasi Ketakutan Nasabah (Coercive Urgency)",
+          description:
+            "Pelaku mencegah korban menelepon Halo BCA resmi dengan dalih antrean ribuan nasabah dan batas waktu sistem akan terlewat.",
+          riskScore: 96,
+        },
+        messages: [
+          {
+            id: "m4",
+            sender: "persona",
+            text: "Waduh Bapak/Ibu, antrean telepon di 1500888 saat ini sedang membeludak mencapai ribuan panggilan karena nasabah se-Indonesia sedang memproses ini. Kalau menunggu antrean telepon, batas waktu jam 17:00 WIB pasti terlewat.",
+            time: "14:18",
+          },
+          {
+            id: "m5",
+            sender: "persona",
+            text: "Ini jalur fast-track langsung dari sistem BCA Priority. Tinggal klik linknya, masukkan 16 digit nomor kartu ATM dan PIN untuk verifikasi kepemilikan rekening agar tidak didebit otomatis.",
+            time: "14:19",
+          },
+        ],
+        choices: [
+          {
+            id: "c2_safe",
+            label: "Tolak Keras: Bank Tidak Pernah Minta PIN",
+            actionText:
+              "Petugas bank asli TIDAK PERNAH meminta nomor kartu ATM dan PIN nasabah dalam formulir apapun! Ini link phishing palsu. Nomor Anda sudah saya laporkan ke Patroli Siber dan BCA!",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: ["Prinsip Kerahasiaan PIN/Kredensial", "Mengenali Karakteristik Phishing Web"],
+          },
+          {
+            id: "c2_fatal",
+            label: "Menyerahkan Nomor Kartu & PIN",
+            actionText:
+              "Oh begitu ya Bu. Baik saya isi nomor kartu ATM dan PIN saya di link itu sekarang biar saldo tabungan saya tidak terpotong.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+      step_2_persuade: {
+        id: "step_2_persuade",
+        psychologicalTactic: "Legitimasi Palsu & Surat Keputusan Fiktif",
+        heuristicTelemetry: {
+          indicatorTitle: "Fabricated Institutional Authority",
+          description:
+            "Pelaku mencatut nomor Surat Edaran Direksi fiktif untuk meyakinkan korban bahwa kebijakan pemotongan ini sah.",
+          riskScore: 90,
+        },
+        messages: [
+          {
+            id: "m6",
+            sender: "persona",
+            text: "Surat edaran resmi sudah kami kirimkan ke email terdaftar sejak minggu lalu Pak/Bu, sesuai Surat Keputusan Direksi BCA No. 042/SK/BCA/2026. Kemungkinan masuk ke folder spam email Anda.",
+            time: "14:18",
+          },
+          {
+            id: "m7",
+            sender: "persona",
+            text: "Kami selaku tim Customer Care hanya membantu agar rekening Anda tidak terpotong otomatis Rp150.000 malam ini. Cukup buka link https://bca-pembaruan-tarif.info/batal-tarif dan lengkapi data verifikasi akun.",
+            time: "14:19",
+          },
+        ],
+        choices: [
+          {
+            id: "c3_safe",
+            label: "Bongkar Domain Palsu .info",
+            actionText:
+              "Domain resmi BCA adalah www.bca.co.id dan klikbca.com, bukan bca-pembaruan-tarif.info! Bank tidak pernah memakai ekstensi .info. Anda penipu, saya laporkan dan blokir sekarang!",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: ["Inspeksi Domain URL Resmi", "Identifikasi TLD Mencurigakan", "Zero Trust"],
+          },
+          {
+            id: "c3_fatal",
+            label: "Percaya & Mengisi Formulir",
+            actionText:
+              "Oalah ada surat edarannya ya. Yaudah Bu saya klik linknya sekarang dan isi datanya.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+    },
+    breachOutcome: {
+      headline: "SIMULASI: KREDENSIAL M-BANKING DICURI & SALDO DIKURAS",
+      stolenOtp:
+        "NOTIFIKASI BANK BCA: 'Transfer dana sebesar Rp 12.500.000 ke Rekening Penampung Virtual Account BERHASIL. Sisa saldo rekening Anda: Rp 45.000.'",
+      drainAmount: "Rp 12.500.000",
+      targetAccount: "Virtual Account Bank Jago / Dana (Akun Mule Penampung)",
+      compromisedData: [
+        "Nomor kartu ATM (16 digit) dan tanggal kedaluwarsa berhasil direkam situs phishing.",
+        "Kode PIN rahasia dan User ID KlikBCA diserahkan langsung oleh korban di web palsu.",
+        "Pelaku langsung melakukan pengambilalihan akun (Account Takeover) dan menguras saldo tabungan.",
+      ],
+      lessonLearned:
+        "Bank BCA maupun bank manapun di Indonesia TIDAK PERNAH menaikkan biaya transfer menjadi Rp 150.000/bulan. Bank juga TIDAK PERNAH meminta nomor kartu ATM, PIN, kode OTP, atau password melalui tautan link di chat WhatsApp atau SMS.",
+      systemWarningText:
+        "⚠️ [Peringatan Browser] Data kredensial perbankan (Nomor Kartu ATM & PIN) telah terkirim ke server phishing 'bca-pembaruan-tarif.info'!",
+      drainNotificationText:
+        "NOTIFIKASI BANK BCA: Transaksi debit transfer keluar sebesar Rp 12.500.000 ke Rekening Penampung telah BERHASIL.",
+      scammerExitText:
+        "Terima kasih, data pembatalan tarif Anda sudah masuk ke sistem kami (Nomor Anda langsung diblokir oleh pelaku).",
+    },
+    victoryOutcome: {
+      headline: "SIMULASI BERHASIL: ANDA TANGKAL SERANGAN PHISHING BCA PALSU!",
+      score: 100,
+      tacticsFoiled: [
+        "Membongkar hoaks kenaikan tarif perbankan Rp150.000/bulan",
+        "Mengenali domain situs web palsu (.info alih-alih bca.co.id)",
+        "Menjaga kerahasiaan nomor kartu ATM dan PIN dari permintaan pihak ketiga",
+        "Memilih konfirmasi langsung ke nomor resmi Halo BCA 1500888",
+      ],
+      keyInsight:
+        "Pihak bank resmi TIDAK PERNAH mengirimkan tautan link pembatalan tarif melalui pesan instan WhatsApp atau SMS. Seluruh informasi perubahan tarif perbankan hanya diumumkan melalui situs resmi www.bca.co.id atau kanal media sosial bercentang biru resmi.",
+      scammerConcedeText:
+        "Ya sudah kalau tidak mau dibantu batalkan! Jangan komplain ke bank ya kalau saldo terpotong otomatis tiap bulan!",
+      defenseNotificationText:
+        "🛡️ Upaya phishing perbankan berhasil digagalkan. Rekening tabungan dan PIN m-Banking Anda 100% aman terlindungi.",
     },
   },
 };
-
