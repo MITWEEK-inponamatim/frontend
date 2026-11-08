@@ -194,7 +194,15 @@ export function ScanRecordResult({
         {/* Finished Verdict Report */}
         {record?.report && (
           <ScanResultPanel
-            result={record.report}
+            result={{
+              ...record.report,
+              artifacts: {
+                ...record.report.artifacts,
+                final_url:
+                  (record.report.artifacts?.final_url as string) ||
+                  (kind === "url" && record.input_ref ? record.input_ref : undefined),
+              },
+            }}
             resetLabel="Periksa data baru"
             onReset={() => router.push("/recognize")}
           />

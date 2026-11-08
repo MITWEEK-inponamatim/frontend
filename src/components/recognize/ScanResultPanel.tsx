@@ -231,7 +231,10 @@ export function ScanResultPanel({
 
       {screenshotUrl && (
         <div className="border-t border-slate-100 pt-4 text-left">
-          <BrowserScreenshotViewer screenshotUrl={screenshotUrl} />
+          <BrowserScreenshotViewer
+            screenshotUrl={screenshotUrl}
+            targetUrl={(result.artifacts?.final_url as string) || undefined}
+          />
         </div>
       )}
 
