@@ -137,6 +137,19 @@ export function RoleplaySimulator({
           setTimeout(() => {
             setStatus("victory");
             setIsSheetMinimized(false);
+            if (typeof window !== "undefined") {
+              try {
+                const storageKey = "threatlens_completed_scenarios";
+                const stored = localStorage.getItem(storageKey);
+                const list: string[] = stored ? JSON.parse(stored) : [];
+                if (!list.includes(scenario.id)) {
+                  list.push(scenario.id);
+                  localStorage.setItem(storageKey, JSON.stringify(list));
+                }
+              } catch {
+                // Ignore storage errors in private browsing
+              }
+            }
           }, 1200);
         }, 1000);
       }, 1000);

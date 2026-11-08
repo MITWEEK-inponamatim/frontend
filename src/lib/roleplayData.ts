@@ -1476,4 +1476,503 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
         "Menolak tawaran like video berbayar tinggi dan segera berhenti saat muncul klausul deposit uang modal",
     },
   },
+
+  "giveaway-marketplace": {
+    id: "giveaway-marketplace",
+    code: "SKENARIO 07",
+    title: "Pemenang Undian Belanja Marketplace",
+    personaName: "Admin Hadiah",
+    personaRole: "Layanan Promo Berkah / CS Undian",
+    personaAvatar: "/avatars/admin_hadiah.jpg",
+    personaPhone: "+62 878-1920-3841",
+    categoryBadge: "GIVEAWAY PALSU",
+    threatTarget: "Biaya Tebusan Hadiah Fiktif (Advance Fee Fraud)",
+    backgroundStory:
+      "Berdasarkan modus penipuan undian berhadiah mengatasnamakan marketplace terkemuka: Pelaku mengabarkan korban memenangkan hadiah utama iPhone 16 Pro Max dari program undian transaksi berkah. Pelaku mendesak korban segera mentransfer biaya tebusan pajak undian dan asuransi pengiriman sebesar Rp1.250.000 ke rekening pribadi bendahara sebelum batas waktu hangus.",
+    initialStepId: "step_1",
+    steps: {
+      step_1: {
+        id: "step_1",
+        psychologicalTactic: "Euforia Kemenangan & Ancaman Hangus (Greed & Artificial Scarcity)",
+        heuristicTelemetry: {
+          indicatorTitle: "Pemberitahuan Pemenang Hadiah via Pesan Pribadi",
+          description:
+            "Program undian resmi tidak pernah meminta transfer uang pajak di awal via rekening perorangan WhatsApp.",
+          riskScore: 93,
+        },
+        messages: [
+          {
+            id: "m1",
+            sender: "persona",
+            text: "SELAMAT! Nomor WhatsApp Anda terpilih sebagai Pemenang Utama Program Undian Berkah Belanja Marketplace 2026. Anda berhak membawa pulang 1 unit iPhone 16 Pro Max 256GB senilai Rp 25.000.000 secara GRATIS!",
+            time: "15:10",
+          },
+          {
+            id: "m2",
+            sender: "persona",
+            text: "Untuk klaim hadiah dan pengiriman nomor resi paket, pemenang hanya diwajibkan menyelesaikan biaya administrasi bea balik nama dan asuransi ekspedisi sebesar Rp 1.250.000 (biaya ini 100% dikembalikan saat barang diterima).",
+            time: "15:11",
+          },
+          {
+            id: "m3",
+            sender: "persona",
+            text: "Transfer sekarang ke rekening bendahara verifikasi hadiah kami: Bank BRI 0281-01-09283-502 an Ahmad Santoso. Batas klaim hanya 1 jam ke depan, lewat dari itu hadiah dialihkan ke pemenang cadangan!",
+            time: "15:11",
+          },
+        ],
+        choices: [
+          {
+            id: "c1_safe",
+            label: "Tolak & Ingatkan Regulasi Pajak Hadiah",
+            actionText:
+              "Undian resmi marketplace tidak pernah memungut biaya tebusan asuransi ke rekening perorangan via WhatsApp. Pajak undian resmi selalu ditanggung penyelenggara atau dipotong resmi dengan surat keterangan Kementerian Sosial. Hadiah ini jelas fiktif!",
+            riskLevel: "safe",
+            nextStepId: "step_2_confront",
+            tacticsRevealed: [
+              "Menolak Uang Muka Hadiah",
+              "Memahami Ketentuan Pajak Undian Kemensos",
+            ],
+          },
+          {
+            id: "c1_inq",
+            label: "Minta Potong Biaya dari Nilai Hadiah",
+            actionText:
+              "Kalau memang saya menang, kenapa biaya Rp1.250.000 itu tidak dipotong langsung dari harga iPhone atau diganti uang tunai saja? Kenapa rekening tujuannya atas nama perorangan Ahmad Santoso?",
+            riskLevel: "inquisitive",
+            nextStepId: "step_2_persuade",
+            tacticsRevealed: [
+              "Mempertanyakan Alur Pemotongan Biaya",
+              "Mengidentifikasi Rekening Pribadi",
+            ],
+          },
+          {
+            id: "c1_fatal",
+            label: "Tergiur iPhone Gratis & Transfer Rp1.250.000",
+            actionText:
+              "Wah alhamdulillah saya menang iPhone 16! Baik admin, saya transfer biaya asuransinya Rp1.250.000 sekarang ke rekening BRI Ahmad Santoso agar hadiah tidak dialihkan.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+      step_2_confront: {
+        id: "step_2_confront",
+        psychologicalTactic: "Dokumen Legalitas Palsu & Surat Izin Cetak Fiktif",
+        heuristicTelemetry: {
+          indicatorTitle: "Manipulasi Surat Izin Kemensos & Notaris Palsu",
+          description:
+            "Pelaku memamerkan sertifikat pemenang berlogo instansi pemerintah yang telah diedit untuk meyakinkan korban.",
+          riskScore: 95,
+        },
+        messages: [
+          {
+            id: "m4",
+            sender: "persona",
+            text: "Jangan khawatir kak! Undian kami resmi disahkan oleh Notaris dan Kementerian Sosial RI. Kami kirimkan foto SK Pemenang dan KTP petugas kami sebagai jaminan hukum.",
+            time: "15:14",
+          },
+          {
+            id: "m5",
+            sender: "persona",
+            text: "Uang Rp 1.250.000 itu bukan biaya tebusan kak, tapi syarat validasi sistem BI FAST dan asuransi barang antikorupsi. Begitu barang sampai di tangan kakak besok, uang jaminan Rp 1.250.000 langsung diserahkan kembali oleh kurir dalam amplop tertutup!",
+            time: "15:15",
+          },
+        ],
+        choices: [
+          {
+            id: "c2_safe",
+            label: "Bongkar SK Palsu & Laporkan Penipuan",
+            actionText:
+              "SK Kemensos dan Notaris yang Anda kirim jelas hasil editan Photoshop murahan dengan cap stempel buram. Kurir ekspedisi manapun tidak pernah mengantar amplop uang pengembalian pajak undian. Penipuan Anda sudah terbongkar!",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: [
+              "Membongkar Surat Izin Fiktif",
+              "Menangkal Alibi Pengembalian Dana Kurir",
+            ],
+          },
+          {
+            id: "c2_fatal",
+            label: "Yakin Karena Ada Surat Izin & Transfer",
+            actionText:
+              "Oh uangnya dibalikin lagi sama kurir ya. Ada surat izin notarisnya juga. Ya sudah saya transfer sekarang Rp1.250.000 ke rekening BRI.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+      step_2_persuade: {
+        id: "step_2_persuade",
+        psychologicalTactic: "Aturan Fiktif Sistem Akuntansi Perusahaan",
+        heuristicTelemetry: {
+          indicatorTitle: "Alibi Pembukuan Audit Fiktif",
+          description:
+            "Pelaku berdalih hadiah berbentuk barang fisik bersegel pabrik sehingga tidak bisa dipotong tunai.",
+          riskScore: 91,
+        },
+        messages: [
+          {
+            id: "m6",
+            sender: "persona",
+            text: "Unit iPhone sudah bersegel resmi Apple iBox dan dipacking kayu dalam pengawasan pabean kak, jadi sistem audit tidak membolehkan pembukaan segel untuk dipotong nominalnya.",
+            time: "15:14",
+          },
+          {
+            id: "m7",
+            sender: "persona",
+            text: "Rekening Ahmad Santoso adalah rekening escrow bendahara penjaminan sementara. Waktu kakak tinggal 15 menit lagi sebelum sistem membatalkan status juara kakak secara otomatis!",
+            time: "15:15",
+          },
+        ],
+        choices: [
+          {
+            id: "c3_safe",
+            label: "Tegaskan Bahwa Rekening Escrow Palsu",
+            actionText:
+              "Tidak ada istilah rekening pribadi sebagai escrow penjaminan resmi korporasi marketplace. Rekening perorangan itu murni rekening penampung kejahatan siber (mule account). Saya batalkan dan nomor ini saya laporkan!",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: [
+              "Mengenali Istilah Escrow Palsu",
+              "Menghentikan Manipulasi Tenggat Waktu",
+            ],
+          },
+          {
+            id: "c3_fatal",
+            label: "Panik Batas Waktu 15 Menit & Transfer",
+            actionText:
+              "Tinggal 15 menit lagi ya! Waduh sayang banget kalau iPhone 16 saya hangus. Saya transfer sekarang uangnya.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+    },
+    breachOutcome: {
+      headline: "SIMULASI: TERPEDAYA HADIAH GADUNGAN & UANG ASURANSI AMBLAS",
+      stolenOtp:
+        "BUKTI TRANSFER: 'Transfer sebesar Rp 1.250.000 ke BRI 0281-01-09283-502 an Ahmad Santoso BERHASIL.'",
+      drainAmount: "Rp 1.250.000",
+      targetAccount: "Rekening Pribadi Penampung Hadiah Fiktif",
+      compromisedData: [
+        "Uang korban sebesar Rp1.250.000 langsung lenyap ditarik di ATM oleh sindikat penipu.",
+        "Pelaku kembali menghubungi korban dan meminta biaya tambahan 'Aktivasi Garansi IMEI Bea Cukai' sebesar Rp2.500.000.",
+        "Hadiah iPhone 16 Pro Max tidak pernah ada dan nomor korban langsung diblokir.",
+      ],
+      lessonLearned:
+        "Pemenang undian resmi dari marketplace maupun perusahaan manapun TIDAK AKAN PERNAH diminta mentransfer uang ke rekening pribadi sebelum hadiah dikirim. Pajak hadiah resmi di Indonesia selalu diumumkan secara terbuka di aplikasi resmi dan diverifikasi melalui Dinas Sosial/Kemensos, bukan lewat chat WhatsApp pribadi.",
+      systemWarningText:
+        "⚠️ [Penipuan Hadiah Fiktif Terdeteksi] Pelaku meminta uang tebusan pengiriman hadiah ke rekening perorangan!",
+      drainNotificationText:
+        "NOTIFIKASI BANK: Transfer keluar sebesar Rp 1.250.000 ke rekening penipu berhasil. Pelaku kembali meminta biaya IMEI tambahan!",
+      scammerExitText:
+        "(Uang tebusan Anda diterima penipu. Nomor Anda langsung diblokir dan barang tidak pernah dikirimkan).",
+    },
+    victoryOutcome: {
+      headline: "SIMULASI BERHASIL: ANDA TANGKAL JEBAKAN UNDIAN MARKETPLACE PALSU!",
+      score: 100,
+      tacticsFoiled: [
+        "Membongkar trik hadiah gratis dengan tuntutan uang tebusan di muka (Advance Fee Fraud)",
+        "Menolak mentransfer dana ke rekening pribadi mengatasnamakan bendahara",
+        "Mengenali dokumen SK Notaris dan izin Kemensos hasil manipulasi visual",
+        "Menolak terburu-buru oleh manipulasi batas waktu hangus buatan",
+      ],
+      keyInsight:
+        "Kaidah utama undian berhadiah: Jika Anda harus membayar sejumlah uang terlebih dahulu untuk menerima sebuah hadiah gratis, maka itu 100% adalah PENIPUAN (Advance Fee Scam).",
+      scammerConcedeText:
+        "Ya sudah kalau gak mau klaim, hadiah iPhone kami serahkan ke pemenang cadangan!",
+      defenseNotificationText:
+        "🛡️ Upaya penipuan hadiah fiktif berhasil digagalkan. Uang Anda selamat dari modus tebusan giveaway palsu.",
+    },
+    forensicSummary: {
+      targetLabel: "Rekening Bendahara Gadungan",
+      targetValue: "Bank BRI 0281-01-09283-502 an Ahmad Santoso",
+      threatClassification: "Advance Fee Fraud & Lottery Scam (Tingkat Risiko: 93%)",
+      indicatorLabel: "Tuntutan Biaya Tebusan",
+      indicatorValue: "Biaya Pajak Hadiah & Asuransi Pengiriman Fiktif (Rp 1.250.000)",
+      attackImpact:
+        "Kerugian finansial biaya tebusan di muka, pemerasan biaya IMEI lanjutan, dan hadiah fiktif tidak pernah ada",
+      officialProcedure:
+        "Pemberitahuan pemenang undian resmi hanya diumumkan melalui banner aplikasi resmi marketplace atau akun media sosial terverifikasi centang biru",
+      psychologicalPressure:
+        "Euforia kemenangan barang mewah (iPhone 16) dan ancaman hangus dalam batas waktu 1 jam (Greed & Artificial Urgency)",
+      decisionPointBreached:
+        "Tergiur hadiah barang mewah dan mentransfer uang tebusan ke rekening pribadi penipu",
+      decisionPointSafe:
+        "Menolak transfer ke rekening perorangan dan memvalidasi kebenaran undian via aplikasi resmi",
+    },
+  },
+
+  "titip-dana-kripto": {
+    id: "titip-dana-kripto",
+    code: "SKENARIO 08",
+    title: "Titip Dana Trading Kripto Bodong",
+    personaName: "Kevin Pratama",
+    personaRole: "Trader Kripto Independen / Pengelola Investasi Kilat",
+    personaAvatar: "/avatars/kevin.jpg",
+    personaPhone: "+62 852-9102-3918",
+    categoryBadge: "INVESTASI ILEGAL",
+    threatTarget: "Investasi Ilegal Tanpa Izin OJK (Pig Butchering)",
+    backgroundStory:
+      "Berdasarkan modus kejahatan investasi ilegal titip dana trading kripto: Pelaku memamerkan tangkapan layar profit harian 15% tanpa risiko dan saldo ratusan juta di media sosial, lalu membujuk korban menitipkan dana modal mulai Rp1.000.000 ke platform trading fiktif tidak berizin Bappebti/OJK. Setelah dana masuk, grafik trading dimanipulasi seolah-olah profit besar, namun saat korban ingin menarik dana (withdrawal), pelaku mengunci akun dan menuntut transfer uang pajak tambahan.",
+    initialStepId: "step_1",
+    steps: {
+      step_1: {
+        id: "step_1",
+        psychologicalTactic: "Iming-iming Profit Pasti Tanpa Risiko (Unrealistic ROI & Greed Pretexting)",
+        heuristicTelemetry: {
+          indicatorTitle: "Klaim Profit Harian Tetap 15% Tanpa Risiko",
+          description:
+            "Dalam dunia investasi legal, tidak ada instrumen finansial yang dapat menjamin profit pasti 15% setiap hari tanpa risiko rugi.",
+          riskScore: 97,
+        },
+        messages: [
+          {
+            id: "m1",
+            sender: "persona",
+            text: "Halo bro! Salam cuan! Gue Kevin, admin channel Signal Crypto VIP Indonesia. Kemarin gue liat lu follow akun edukasi trading gue di medsos.",
+            time: "19:40",
+          },
+          {
+            id: "m2",
+            sender: "persona",
+            text: "Lagi ada program eksklusif 'Titip Dana Trading Bot AI' nih bro buat 5 slot tercepat. Cukup setor modal minimal Rp 1.000.000, bot trading kami jamin profit pasti 15% per hari tanpa risiko rugi sama sekali (garansi modal 100% aman).",
+            time: "19:41",
+          },
+          {
+            id: "m3",
+            sender: "persona",
+            text: "Nih gue kirim bukti pencairan profit member kami tadi sore yang titip 5 juta dapet profit 750 ribu dalam 6 jam: https://crypto-asset-global.xyz/bukti-cuan. Kalau mau gabung slot hari ini tinggal transfer modal ke dompet rekening penjamin kami bro.",
+            time: "19:41",
+          },
+        ],
+        choices: [
+          {
+            id: "c1_safe",
+            label: "Bongkar Skema Ponzi & Izin Bappebti/OJK",
+            actionText:
+              "Janji profit pasti 15% per hari tanpa risiko adalah ciri mutlak investasi bodong skema Ponzi. Semua pedagang aset kripto di Indonesia wajib terdaftar resmi di Bappebti dan OJK. Menitipkan dana ke rekening pribadi adalah tindakan ilegal!",
+            riskLevel: "safe",
+            nextStepId: "step_2_confront",
+            tacticsRevealed: [
+              "Mengenali Ciri Investasi Bodong",
+              "Menuntut Izin Resmi Bappebti/OJK",
+            ],
+          },
+          {
+            id: "c1_inq",
+            label: "Tanya Sistem Trading & Legalitas Kantor",
+            actionText:
+              "Kok bisa jamin profit pasti 15% per hari bro padahal pasar kripto sangat volatil? Platform tradingnya apa dan legalitas perusahaannya di Bappebti bagaimana?",
+            riskLevel: "inquisitive",
+            nextStepId: "step_2_persuade",
+            tacticsRevealed: [
+              "Mempertanyakan Rasionalitas Finansial",
+              "Meminta Bukti Regulasi Pasar",
+            ],
+          },
+          {
+            id: "c1_fatal",
+            label: "Tergiur Cuan Kilat & Transfer Modal Rp1.000.000",
+            actionText:
+              "Mantap banget bro profit 15% sehari! Gue mau coba slot minimal Rp1.000.000 dulu deh bro, tolong kirim nomor rekeningnya sekarang biar botnya langsung jalan.",
+            riskLevel: "fatal",
+            nextStepId: "step_2_wd_trap",
+          },
+        ],
+      },
+      step_2_confront: {
+        id: "step_2_confront",
+        psychologicalTactic: "Alibi Pasar Internasional & Pamer Kemewahan (Flexing)",
+        heuristicTelemetry: {
+          indicatorTitle: "Pengaburan Yuridiksi Hukum Global",
+          description:
+            "Pelaku mengklaim platform beroperasi di luar yurisdiksi Indonesia untuk menghindari hukum Bappebti/OJK.",
+          riskScore: 96,
+        },
+        messages: [
+          {
+            id: "m4",
+            sender: "persona",
+            text: "Aduh bro, OJK dan Bappebti mah regulasi lokal konvensional yang kaku! Server bot AI kami terdaftar di broker internasional Cayman Islands dan menggunakan algoritma arbitrase kuantum.",
+            time: "19:44",
+          },
+          {
+            id: "m5",
+            sender: "persona",
+            text: "Gue sendiri udah nikmatin hasilnya bro, dari modal puluhan juta sekarang udah kebeli BMW dan apartemen dari trading ini. Kalau lu kebanyakan mikir ragu-ragu terus, lu bakal ketinggalan cuan selamanya di saat orang lain udah pasif income!",
+            time: "19:45",
+          },
+        ],
+        choices: [
+          {
+            id: "c2_safe",
+            label: "Tolak Alibi Luar Negeri & Blokir",
+            actionText:
+              "Dalih broker luar negeri tanpa kantor di Indonesia adalah modus klasik agar uang korban tidak bisa dilacak penegak hukum saat kabur. Flexing mobil dan apartemen itu sewaan sindikat. Saya tidak akan buang uang untuk penipuan Anda!",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: [
+              "Membongkar Alibi Broker Offshore",
+              "Menolak Manipulasi FOMO & Flexing",
+            ],
+          },
+          {
+            id: "c2_fatal",
+            label: "Kena FOMO & Setor Modal Rp1.000.000",
+            actionText:
+              "Bener juga ya, mumpung botnya lagi bagus. Daripada nyesel ketinggalan cuan. Oke bro Kevin gue transfer modal Rp1.000.000 sekarang.",
+            riskLevel: "fatal",
+            nextStepId: "step_2_wd_trap",
+          },
+        ],
+      },
+      step_2_persuade: {
+        id: "step_2_persuade",
+        psychologicalTactic: "Jaminan Garansi Uang Kembali (False Safety Net)",
+        heuristicTelemetry: {
+          indicatorTitle: "Garansi Finansial Sepihak Tanpa Akta Notaris",
+          description:
+            "Pelaku memberikan garansi lisan bahwa modal korban 100% aman dan bisa ditarik kapan saja.",
+          riskScore: 93,
+        },
+        messages: [
+          {
+            id: "m6",
+            sender: "persona",
+            text: "Sistem kami pake stop-loss otomatis di level mikro detik bro, jadi gak mungkin ada floating minus. Kalau sampai ada kerugian teknis, dana modal lu gue garansi ganti 100% dari kantong pribadi gue.",
+            time: "19:44",
+          },
+          {
+            id: "m7",
+            sender: "persona",
+            text: "Lu coba aja tes modal kecil 1 juta hari ini. Besok sore lu langsung bisa tarik modal pokok 1 juta plus profitnya Rp 150.000 ke rekening lu. Gak ada komitmen kontrak mengikat sama sekali.",
+            time: "19:45",
+          },
+        ],
+        choices: [
+          {
+            id: "c3_safe",
+            label: "Tegaskan Garansi Pribadi Tidak Sah Secara Hukum",
+            actionText:
+              "Garansi lisan di chat WhatsApp sama sekali tidak memiliki kekuatan hukum. Begitu uang ditransfer ke rekening pribadi Anda, uang itu sudah hilang kendali. Satgas PASTI OJK sudah memasukkan modus titip dana kripto sebagai tindak pidana pencucian uang!",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: [
+              "Menolak Garansi Palsu Lisan",
+              "Memahami Aspek Perlindungan Konsumen OJK",
+            ],
+          },
+          {
+            id: "c3_fatal",
+            label: "Percaya Garansi Pribadi & Transfer",
+            actionText:
+              "Ada garansi ganti rugi pribadi ya. Yaudah gue tenang kalau gitu. Gue coba tes setor 1 juta ya bro sekarang.",
+            riskLevel: "fatal",
+            nextStepId: "step_2_wd_trap",
+          },
+        ],
+      },
+      step_2_wd_trap: {
+        id: "step_2_wd_trap",
+        psychologicalTactic: "Jebakan Pajak Penarikan Dana (Withdrawal Tax Extortion)",
+        heuristicTelemetry: {
+          indicatorTitle: "Penguncian Dana & Tuntutan Pajak Fiktif",
+          description:
+            "Pelaku memanipulasi saldo korban di web fiktif menjadi puluhan juta, lalu menuntut transfer pajak penarikan 20% sebelum dana dicairkan.",
+          riskScore: 99,
+        },
+        messages: [
+          {
+            id: "m8",
+            sender: "persona",
+            text: "Gokil bro! Lu hoki banget, tadi malem pasar koin meledak dan modal 1 juta lu di bot sekarang udah berubah jadi Rp 18.500.000 di dashboard akun lu!",
+            time: "19:48",
+          },
+          {
+            id: "m9",
+            sender: "persona",
+            text: "Nah tapi untuk proses pencairan (withdrawal) dana Rp 18.500.000 ke rekening bank lu, sistem smart contract memerlukan deposit 'Pajak Kliring Kripto 20%' sebesar Rp 3.700.000 ke rekening bendahara trading. Begitu pajak dibayar, total Rp 22.200.000 langsung cair sekaligus ke rekening lu!",
+            time: "19:49",
+          },
+        ],
+        choices: [
+          {
+            id: "c4_safe",
+            label: "Sadar Saldo Dashboard Palsu & Berhenti",
+            actionText:
+              "Ini dia trik penipuan Pig Butchering! Angka Rp18.500.000 di web itu cuma simulasi angka bohongan yang bisa diketik siapa saja! Penarikan dana di bursa legal dipotong otomatis dari saldo, bukan malah meminta nasabah transfer uang pajak tambahan! Saya stop dan laporkan rekening Anda ke polisi!",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: [
+              "Mengenali Skema Pig Butchering",
+              "Menolak Transfer Pajak Withdrawal Fiktif",
+            ],
+          },
+          {
+            id: "c4_fatal",
+            label: "Transfer Uang Pajak Rp3.700.000 Demi Cair",
+            actionText:
+              "Wah 18 juta rupiah! Banyak banget cuannya! Oke bro Kevin saya transfer uang pajak Rp3.700.000 sekarang ke rekening bendahara biar uang 18 juta saya bisa langsung cair.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+    },
+    breachOutcome: {
+      headline: "SIMULASI: TERJEBAK SKEMA PIG BUTCHERING & SELURUH MODAL AMBLAS",
+      stolenOtp:
+        "BUKTI TRANSFER: 'Transfer modal Rp 1.000.000 + Biaya Pajak WD Rp 3.700.000 ke rekening Kevin Pratama BERHASIL.'",
+      drainAmount: "Rp 4.700.000",
+      targetAccount: "Rekening Penampung Titip Dana Bodong (BCA / CIMB Niaga)",
+      compromisedData: [
+        "Modal awal Rp1.000.000 dan uang tebusan pajak pencairan Rp3.700.000 amblas ke kantong pelaku.",
+        "Dashboard situs trading fiktif langsung menampilkan error 'Akun Disuspend karena Pelanggaran AML'.",
+        "Pelaku menghapus seluruh riwayat chat Telegram dan nomor WhatsApp korban langsung diblokir.",
+      ],
+      lessonLearned:
+        "TIDAK ADA investasi legal yang menjamin profit pasti harian tanpa risiko rugi. Bursa kripto resmi yang terdaftar di Bappebti (seperti Indodax, Tokocrypto, Pintu) TIDAK PERNAH mengumpulkan dana lewat titip dana rekening perorangan dan TIDAK PERNAH meminta transfer uang terpisah untuk membayar pajak penarikan saldo.",
+      systemWarningText:
+        "⚠️ [Investasi Kripto Ilegal Terdeteksi] Skema penipuan Pig Butchering dengan penguncian dana dan pemerasan biaya pajak pencairan!",
+      drainNotificationText:
+        "NOTIFIKASI BANK: Transfer keluar sebesar Rp 4.700.000 ke penipu titip dana kripto berhasil. Saldo modal dan profit fiktif lenyap tak berbekas!",
+      scammerExitText:
+        "(Akun Anda di situs trading dibekukan dan nomor WhatsApp Anda langsung diblokir permanen oleh pelaku).",
+    },
+    victoryOutcome: {
+      headline: "SIMULASI BERHASIL: ANDA TANGKAL JEBAKAN INVESTASI KRIPTO BODONG!",
+      score: 100,
+      tacticsFoiled: [
+        "Menolak klaim profit pasti 15% per hari tanpa risiko",
+        "Mengetahui kewajiban legalitas Bappebti dan OJK bagi penyelenggara aset kripto",
+        "Membongkar alibi broker offshore dan flexing gaya hidup mewah",
+        "Mendeteksi skema penipuan Pig Butchering pada jebakan pajak pencairan dana (Withdrawal Tax)",
+      ],
+      keyInsight:
+        "Kaidah emas investasi: Semakin tinggi janji keuntungan yang ditawarkan, semakin tinggi pula risikonya (High Risk, High Return). Jika ada pihak yang menjamin keuntungan tinggi TANPA RISIKO, dapat dipastikan 100% itu adalah investasi bodong.",
+      scammerConcedeText:
+        "Yaudah kalau lu mental miskin gamau diajarin kaya, jangan nyesel liat temen-temen lu sukses duluan!",
+      defenseNotificationText:
+        "🛡️ Upaya penipuan titip dana kripto bodong berhasil digagalkan. Tabungan Anda aman dari jeratan skema Ponzi.",
+    },
+    forensicSummary: {
+      targetLabel: "Platform Trading & Dompet Penampung",
+      targetValue: "crypto-asset-global.xyz & Rekening BCA an Kevin Pratama",
+      threatClassification: "Pig Butchering Crypto Scam & Illegal Investment (Tingkat Risiko: 97%)",
+      indicatorLabel: "Ciri Investasi Ilegal",
+      indicatorValue:
+        "Janji Profit Pasti 15%/hari + Tuntutan Transfer Pajak Withdrawal Fiktif 20%",
+      attackImpact:
+        "Total modal korban hilang, angka saldo profit dimanipulasi secara fiktif di web penipu, dan rekening diblokir saat mencoba menarik dana",
+      officialProcedure:
+        "Hanya berinvestasi kripto pada Calon Pedagang Fisik Aset Kripto (CPFAK) yang resmi terdaftar di Bappebti (cek di bappebti.go.id) dan OJK",
+      psychologicalPressure:
+        "Keserakahan profit cepat, flexing kekayaan di media sosial, dan manipulasi rasa takut tertinggal peluang (Greed & Fear of Missing Out / FOMO)",
+      decisionPointBreached:
+        "Tergiur iming-iming profit tanpa risiko dan mentransfer modal ke rekening perorangan",
+      decisionPointSafe:
+        "Menegaskan kewajiban izin Bappebti/OJK, membongkar manipulasi angka profit fiktif, dan menolak mentransfer uang pajak pencairan",
+    },
+  },
 };
