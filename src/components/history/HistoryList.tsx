@@ -10,7 +10,6 @@ import { timeAgo } from "@/lib/community";
 import {
   isScanFinished,
   scanKindLabel,
-  scanOutcomeLabel,
   scanTargetLabel,
 } from "@/lib/scanRecord";
 import { scanResultPath } from "@/lib/paths";
@@ -56,36 +55,35 @@ const TABS: { id: ScanTab; label: string; icon: string }[] = [
 function verdictOf(row: { status: string; outcome: string | null; risk_level: string | null }) {
   if (!isScanFinished(row.status)) {
     return {
-      label: "Masih diproses",
-      pillClass: "bg-slate-100 text-slate-700 border border-slate-200/60",
+      label: "MASIH DIPROSES",
+      textClass: "text-slate-500 font-medium",
       iconClass: "bg-slate-100 text-slate-700",
     };
   }
-  const label = scanOutcomeLabel(row.outcome);
   if (row.risk_level === "high" || row.outcome === "confirmed_threat" || row.outcome === "suspicious") {
     return {
-      label: label || "Mencurigakan",
-      pillClass: "bg-red-50 text-red-700 border border-red-200/80 font-medium",
+      label: "BAHAYA",
+      textClass: "text-red-600 font-bold",
       iconClass: "bg-red-50 text-red-600 border border-red-100",
     };
   }
   if (row.risk_level === "medium") {
     return {
-      label: label || "Peringatan",
-      pillClass: "bg-amber-50 text-amber-700 border border-amber-200/80 font-medium",
+      label: "WASPADA",
+      textClass: "text-amber-600 font-semibold",
       iconClass: "bg-amber-50 text-amber-600 border border-amber-100",
     };
   }
   if (row.risk_level === "low" || row.outcome === "benign") {
     return {
-      label: label || "Bersih",
-      pillClass: "bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-medium",
+      label: "AMAN",
+      textClass: "text-emerald-600 font-semibold",
       iconClass: "bg-emerald-50 text-emerald-600 border border-emerald-100",
     };
   }
   return {
-    label: label || "Bukti belum cukup",
-    pillClass: "bg-slate-100 text-slate-700 border border-slate-200/60",
+    label: "BELUM TERVERIFIKASI",
+    textClass: "text-slate-500 font-medium",
     iconClass: "bg-slate-100 text-slate-700",
   };
 }
@@ -439,7 +437,7 @@ export function HistoryList() {
 
                 <div className="flex items-center gap-2 shrink-0">
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs ${verdict.pillClass}`}
+                    className={`shrink-0 text-xs tracking-wide ${verdict.textClass}`}
                   >
                     {verdict.label}
                   </span>

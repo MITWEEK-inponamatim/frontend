@@ -9,7 +9,6 @@ import {
   isScanFinished,
   scanKindLabel,
   SCAN_KIND_META,
-  scanOutcomeLabel,
   scanTargetLabel,
 } from "@/lib/scanRecord";
 import { scanResultPath } from "@/lib/paths";
@@ -24,28 +23,20 @@ type ScanRow = {
   created_at: string;
 };
 
-const VERDICT_TONES = {
-  red: "border-red-200 bg-red-50/70 text-red-700",
-  amber: "border-amber-200 bg-amber-50/70 text-amber-700",
-  green: "border-emerald-200 bg-emerald-50/70 text-emerald-700",
-  slate: "border-slate-200 bg-slate-50 text-slate-600",
-};
-
 function verdictOf(row: ScanRow) {
   if (!isScanFinished(row.status)) {
-    return { label: "Masih diproses", tone: VERDICT_TONES.slate };
+    return { label: "MASIH DIPROSES", textClass: "text-slate-500 font-medium" };
   }
-  return {
-    label: scanOutcomeLabel(row.outcome),
-    tone:
-      row.risk_level === "high"
-        ? VERDICT_TONES.red
-        : row.risk_level === "medium"
-          ? VERDICT_TONES.amber
-          : row.risk_level === "low" || row.outcome === "benign"
-            ? VERDICT_TONES.green
-            : VERDICT_TONES.slate,
-  };
+  if (row.risk_level === "high" || row.outcome === "confirmed_threat" || row.outcome === "suspicious") {
+    return { label: "BAHAYA", textClass: "text-red-600 font-bold" };
+  }
+  if (row.risk_level === "medium") {
+    return { label: "WASPADA", textClass: "text-amber-600 font-semibold" };
+  }
+  if (row.risk_level === "low" || row.outcome === "benign") {
+    return { label: "AMAN", textClass: "text-emerald-600 font-semibold" };
+  }
+  return { label: "BELUM TERVERIFIKASI", textClass: "text-slate-500 font-medium" };
 }
 
 /**
@@ -150,7 +141,7 @@ export function RecentHistoryCard() {
                 </span>
               </div>
               <span
-                className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-medium ${verdict.tone}`}
+                className={`shrink-0 text-xs tracking-wide ${verdict.textClass}`}
               >
                 {verdict.label}
               </span>
