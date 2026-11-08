@@ -964,4 +964,516 @@ export const ROLEPLAY_DETAILS: Record<string, RoleplayScenarioDetail> = {
         "Menolak intimidasi rekening perorangan, membawa kasus ke bank resmi & Satgas PASTI 157, serta mendokumentasikan bukti pemerasan",
     },
   },
+
+  "surat-tilang-etle": {
+    id: "surat-tilang-etle",
+    code: "SKENARIO 05",
+    title: "Pemberitahuan Surat Tilang ETLE",
+    personaName: "Bripka Anton",
+    personaRole: "Petugas Tilang Siber Palsu",
+    personaAvatar: "/avatars/anton.jpg",
+    personaPhone: "+62 811-9238-1920",
+    categoryBadge: "MALWARE ETLE",
+    threatTarget: "Penyusupan Trojan Remote Access & SMS Sniffer",
+    backgroundStory:
+      "Berdasarkan modus penipuan mengatasnamakan Korlantas Polri: Pelaku menyamar sebagai petugas kepolisian lalu lintas dan mengabarkan bahwa kendaraan korban terekam kamera ETLE melakukan pelanggaran lalu lintas. Pelaku melampirkan berkas 'Surat_Tilang_ETLE.apk' berkedok surat konfirmasi resmi untuk mencuri SMS OTP dan menguras saldo rekening korban.",
+    initialStepId: "step_1",
+    steps: {
+      step_1: {
+        id: "step_1",
+        psychologicalTactic: "Pemanfaatan Otoritas Penegak Hukum & Ketakutan Hukum (Authority Pretexting & Legal Intimidation)",
+        heuristicTelemetry: {
+          indicatorTitle: "Trojan Berkedok Dokumen Tilang Polri (.apk)",
+          description:
+            "Surat tilang resmi kepolisian TIDAK PERNAH dikirim dalam bentuk berkas aplikasi Android (.apk) via nomor WhatsApp seluler pribadi.",
+          riskScore: 95,
+        },
+        messages: [
+          {
+            id: "m1",
+            sender: "persona",
+            text: "Selamat siang. Kami dari Tim Penindakan Pelanggaran ETLE Ditlantas Polda Metro Jaya memberitahukan bahwa kendaraan bermotor Anda terekam kamera tilang elektronik melakukan pelanggaran lalu lintas (Pasal 287 UU LLAJ).",
+            time: "09:30",
+          },
+          {
+            id: "m2",
+            sender: "persona",
+            text: "Berikut kami lampirkan Surat Konfirmasi Tilang Elektronik beserta foto bukti rekaman kamera CCTV pelanggaran di lokasi kejadian. Mohon segera dibuka berkas di bawah untuk konfirmasi kepemilikan:",
+            time: "09:31",
+            apkAttachment: {
+              filename: "Surat_Tilang_ETLE.apk",
+              size: "5.1 MB",
+              mime: "application/vnd.android.package-archive",
+              extension: ".apk",
+              dangerousPermissions: [
+                "android.permission.RECEIVE_SMS",
+                "android.permission.READ_SMS",
+                "android.permission.INTERNET",
+                "android.permission.SEND_SMS",
+              ],
+            },
+          },
+          {
+            id: "m3",
+            sender: "persona",
+            text: "Batas waktu konfirmasi adalah 3 x 24 jam. Jika tidak dikonfirmasi, STNK kendaraan Anda akan diblokir sementara di Samsat dan dikenakan denda maksimal Rp 500.000 saat perpanjangan pajak.",
+            time: "09:31",
+          },
+        ],
+        choices: [
+          {
+            id: "c1_safe",
+            label: "Tolak APK & Cek Situs Resmi ETLE Korlantas",
+            actionText:
+              "Polri tidak pernah mengirimkan surat tilang dalam bentuk file aplikasi APK via WhatsApp pribadi. Surat tilang resmi dikirim via pos surat fisik ke alamat STNK atau dicek mandiri di situs resmi etle-korlantas.info. Saya tidak akan buka file ini.",
+            riskLevel: "safe",
+            nextStepId: "step_2_confront",
+            tacticsRevealed: [
+              "Verifikasi Prosedur Resmi ETLE",
+              "Menolak Eksekusi APK Kepolisian Palsu",
+            ],
+          },
+          {
+            id: "c1_inq",
+            label: "Tanya Pelat Nomor & Lokasi Pelanggaran",
+            actionText:
+              "Kendaraan saya pelat nomornya berapa yang kena tilang dan di jalan mana lokasinya Pak? Kenapa bukti fotonya tidak dikirim dalam format gambar biasa JPG/PNG?",
+            riskLevel: "inquisitive",
+            nextStepId: "step_2_persuade",
+            tacticsRevealed: [
+              "Meminta Bukti Konkret",
+              "Mengidentifikasi Kejanggalan Format File",
+            ],
+          },
+          {
+            id: "c1_fatal",
+            label: "Panik Takut STNK Diblokir & Unduh APK",
+            actionText:
+              "Waduh Pak jangan diblokir STNK saya! Saya buka dan pasang berkas surat tilangnya sekarang buat lihat bukti pelanggarannya.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+      step_2_confront: {
+        id: "step_2_confront",
+        psychologicalTactic: "Penguatan Ancaman Pemblokiran STNK & Sidang Pengadilan",
+        heuristicTelemetry: {
+          indicatorTitle: "Eskalasi Intimidasi Birokrasi Samsat",
+          description:
+            "Pelaku menakut-nakuti korban dengan ancaman berkas dilimpahkan ke Pengadilan Negeri dan pemblokiran Samsat.",
+          riskScore: 97,
+        },
+        messages: [
+          {
+            id: "m4",
+            sender: "persona",
+            text: "Jangan sembarangan menuduh ya! Ini sistem integrasi digital terbaru Ditlantas Polri untuk efisiensi paperless. Dokumen terenkripsi keamanan khusus sehingga harus dibuka lewat aplikasi resmi kami tersebut.",
+            time: "09:34",
+          },
+          {
+            id: "m5",
+            sender: "persona",
+            text: "Jika Anda menolak konfirmasi hari ini, berkas pelanggaran Anda langsung kami limpahkan ke Pengadilan Negeri untuk sidang tilang dan denda maksimal dipotong via pajak kendaraan!",
+            time: "09:35",
+          },
+        ],
+        choices: [
+          {
+            id: "c2_safe",
+            label: "Bongkar Penipuan & Laporkan ke Pos Polisi",
+            actionText:
+              "Semua surat tilang resmi memiliki nomor referensi tilang 12 digit yang bisa dicek di situs etle-korlantas.info tanpa perlu install aplikasi apapun. Nomor WhatsApp ini akan saya laporkan ke Divisi Humas Polri dan Kominfo.",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: [
+              "Memahami Validasi ETLE Nasional",
+              "Mendeteksi Penyamaran Otoritas Palsu",
+              "Melaporkan Akun Penipu",
+            ],
+          },
+          {
+            id: "c2_fatal",
+            label: "Takut Sidang Pengadilan & Pasang APK",
+            actionText:
+              "Saya takut kalau sampai sidang di pengadilan Pak. Baik Pak saya install aplikasinya sekarang untuk konfirmasi.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+      step_2_persuade: {
+        id: "step_2_persuade",
+        psychologicalTactic: "Alibi Enkripsi Dokumen & Formalitas Kantor",
+        heuristicTelemetry: {
+          indicatorTitle: "Dalih Enkripsi Data CCTV",
+          description:
+            "Pelaku mengklaim format APK diperlukan untuk memutar video rekaman CCTV beresolusi tinggi.",
+          riskScore: 93,
+        },
+        messages: [
+          {
+            id: "m6",
+            sender: "persona",
+            text: "Pelat nomor dan video rekaman CCTV-nya ada di dalam lampiran berkas itu karena data tilang berukuran besar dan dilindungi sistem enkripsi Korlantas.",
+            time: "09:34",
+          },
+          {
+            id: "m7",
+            sender: "persona",
+            text: "Tinggal klik install saja, nanti otomatis terbuka formulir sanggahan tilang. Jika memang bukan kendaraan Anda, Anda bisa langsung klik tombol sanggah di aplikasi tersebut.",
+            time: "09:35",
+          },
+        ],
+        choices: [
+          {
+            id: "c3_safe",
+            label: "Tolak Dalih Enkripsi & Tegaskan Prosedur",
+            actionText:
+              "Tidak ada dokumen tilang yang dienkripsi ke dalam format .apk installer. Petugas kepolisian resmi tidak pernah meminta masyarakat menginstal aplikasi dari chat WhatsApp. Saya konfirmasi langsung ke pos polisi terdekat!",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: [
+              "Menolak Alibi Teknis Palsu",
+              "Memilih Verifikasi Langsung ke Pos Polisi",
+            ],
+          },
+          {
+            id: "c3_fatal",
+            label: "Ingin Mengajukan Sanggahan & Pasang APK",
+            actionText:
+              "Oh bisa sanggah lewat aplikasi ya Pak. Baik saya unduh dulu aplikasinya untuk ajukan sanggahan bahwa saya tidak melanggar.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+    },
+    breachOutcome: {
+      headline: "SIMULASI: TROJAN ETLE AKTIF & AKSES SMS PERBANKAN DIRETAS",
+      stolenOtp:
+        "NOTIFIKASI SMS OTP: 'Kode OTP BCA: 948102. JANGAN BERIKAN KEPADA SIAPAPUN. Transaksi transfer Rp 8.700.000 ke Bank Jago BERHASIL.'",
+      drainAmount: "Rp 8.700.000",
+      targetAccount: "Rekening Penampung Bank Digital (Mule Account)",
+      compromisedData: [
+        "Malware 'Surat_Tilang_ETLE.apk' mencegat izin RECEIVE_SMS dan READ_SMS di latar belakang.",
+        "Kode OTP verifikasi m-Banking dibaca otomatis oleh server command-and-control (C2) penipu.",
+        "Penipu memindahkan akun perbankan korban ke perangkat baru dan mentransfer seluruh tabungan keluar.",
+      ],
+      lessonLearned:
+        "Korlantas Polri maupun instansi pemerintah manapun TIDAK PERNAH mengirimkan surat pemberitahuan tilang dalam bentuk berkas .apk melalui pesan WhatsApp. Pemberitahuan tilang elektronik resmi hanya dikirim melalui surat pos fisik beramplop dinas cokelat ke alamat sesuai STNK atau dicek langsung melalui portal resmi www.etle-korlantas.info.",
+      systemWarningText:
+        "⚠️ [Malware Android Terpasang] Berkas 'Surat_Tilang_ETLE.apk' meminta izin penyadapan SMS perbankan!",
+      drainNotificationText:
+        "NOTIFIKASI BANK: Transaksi debit transfer keluar Rp 8.700.000 ke rekening penampung telah BERHASIL.",
+      scammerExitText:
+        "(Pesan konfirmasi Anda tidak lagi dibalas, nomor WhatsApp pelaku mendadak tidak aktif).",
+    },
+    victoryOutcome: {
+      headline: "SIMULASI BERHASIL: ANDA TANGKAL SERANGAN MALWARE TILANG ETLE!",
+      score: 100,
+      tacticsFoiled: [
+        "Mengenali penyamaran petugas kepolisian palsu melalui nomor seluler biasa",
+        "Menolak ancaman blokir STNK dan intimidasi sidang pengadilan",
+        "Memahami prosedur sah konfirmasi ETLE hanya lewat pos fisik atau situs resmi etle-korlantas.info",
+        "Menolak membuka berkas .apk yang mengatasnamakan surat dinas kepolisian",
+      ],
+      keyInsight:
+        "Kepolisian Republik Indonesia tidak pernah mendistribusikan aplikasi APK untuk surat tilang. Jangan pernah terkejut atau panik saat menerima tuduhan pelanggaran hukum dari chat WhatsApp; selalu verifikasi secara mandiri melalui saluran resmi pemerintah.",
+      scammerConcedeText:
+        "Ya sudah kalau mau nunggu surat tilang fisik, STNK Anda kami proses blokir di Samsat!",
+      defenseNotificationText:
+        "🛡️ Serangan malware ETLE berhasil digagalkan. Data ponsel dan rekening bank Anda 100% aman terlindungi.",
+    },
+    forensicSummary: {
+      targetLabel: "Nama Berkas Malware",
+      targetValue: "Surat_Tilang_ETLE.apk (5.1 MB)",
+      threatClassification: "Android SMS Sniffer Trojan & Police Impersonation (Tingkat Risiko: 95%)",
+      indicatorLabel: "Izin Berbahaya (Permissions)",
+      indicatorValue: "RECEIVE_SMS, READ_SMS, SEND_SMS, INTERNET",
+      attackImpact:
+        "Penyadapan kode OTP m-Banking via SMS latar belakang, bypass otentikasi dua faktor, dan pengurasan saldo tabungan",
+      officialProcedure:
+        "Pemberitahuan tilang ETLE resmi dikirim melalui surat pos fisik beramplop dinas Polri ke alamat STNK atau diakses di portal www.etle-korlantas.info",
+      psychologicalPressure:
+        "Penyamaran petugas kepolisian, tuduhan pelanggaran pasal lalu lintas, dan ancaman pemblokiran STNK Samsat (Authority Bias & Fear Induction)",
+      decisionPointBreached:
+        "Panik atas tuduhan pelanggaran hukum dan menginstal berkas .apk palsu",
+      decisionPointSafe:
+        "Menolak berkas APK, menegaskan prosedur pos resmi, dan memverifikasi mandiri ke situs ETLE Korlantas",
+    },
+  },
+
+  "freelance-job-bodong": {
+    id: "freelance-job-bodong",
+    code: "SKENARIO 06",
+    title: "Wawancara Kerja Freelance Bodong",
+    personaName: "Jessica Tan",
+    personaRole: "Talent Acquisition Global / Recruiter Freelance",
+    personaAvatar: "/avatars/jessica.jpg",
+    personaPhone: "+62 819-3810-9284",
+    categoryBadge: "LOWONGAN FIKTIF",
+    threatTarget: "Skema Deposit Bertingkat (Ponzi Task Scam)",
+    backgroundStory:
+      "Berdasarkan modus kejahatan rekayasa sosial lowongan kerja paruh waktu (task scam): Pelaku menawarkan pekerjaan mudah paruh waktu berupa like/subscribe video YouTube dengan komisi Rp30.000 per tugas. Korban awalnya diberi komisi kecil untuk membangun kepercayaan, namun kemudian diwajibkan melakukan deposit uang jaminan bertingkat (Rp500.000 hingga Rp5.000.000) ke platform investasi fiktif yang dananya dikunci dan tidak bisa ditarik kembali.",
+    initialStepId: "step_1",
+    steps: {
+      step_1: {
+        id: "step_1",
+        psychologicalTactic: "Pemberian Hadiah Kecil & Pancingan Cepat Kaya (Foot-in-the-Door & Lure of Easy Money)",
+        heuristicTelemetry: {
+          indicatorTitle: "Tawaran Kerja Paruh Waktu Komisi Tidak Masuk Akal",
+          description:
+            "Menawarkan bayaran tinggi hanya untuk like & subscribe video tanpa kualifikasi kerja nyata, pola baku penipuan task scam.",
+          riskScore: 92,
+        },
+        messages: [
+          {
+            id: "m1",
+            sender: "persona",
+            text: "Halo kak! Selamat siang. Saya Jessica Tan dari PT Media Promosi Asia (Partner Resmi TikTok & YouTube). Kami melihat profil aktif kakak dan ingin menawarkan pekerjaan freelance part-time dari rumah.",
+            time: "14:00",
+          },
+          {
+            id: "m2",
+            sender: "persona",
+            text: "Pekerjaannya sangat mudah kak, cuma bantu Like & Subscribe video konten klien kami di YouTube. Setiap 1 video selesai di-like dan kirim screenshot, kakak langsung dapat komisi Rp 30.000 tunai via transfer Dana/OVO/ShopeePay!",
+            time: "14:01",
+          },
+          {
+            id: "m3",
+            sender: "persona",
+            text: "Sebagai bonus perkenalan, coba klik like tautan video berikut dan kirim screenshot ke saya, nanti saya langsung transferkan reward Rp 30.000 ke rekening kakak sekarang juga: https://youtube-booster.promo/task-demo",
+            time: "14:01",
+          },
+        ],
+        choices: [
+          {
+            id: "c1_safe",
+            label: "Tolak & Kenali Pola Task Scam Deposit",
+            actionText:
+              "Tidak ada perusahaan resmi yang membayar Rp30.000 hanya untuk like satu video YouTube. Ini modus task scam pancingan komisi awal yang nantinya berujung minta deposit uang jutaan rupiah. Saya tidak tertarik.",
+            riskLevel: "safe",
+            nextStepId: "step_2_confront",
+            tacticsRevealed: [
+              "Mengenali Pola Task Scam",
+              "Menolak Pancingan Foot-in-the-Door",
+            ],
+          },
+          {
+            id: "c1_inq",
+            label: "Tanya Asal Kontak & Perusahaan Resmi",
+            actionText:
+              "Dapat nomor kontak saya dari mana ya Mbak Jessica? PT Media Promosi Asia punya website resmi atau kantor fisik di mana? Apakah nanti ada syarat deposit uang?",
+            riskLevel: "inquisitive",
+            nextStepId: "step_2_persuade",
+            tacticsRevealed: [
+              "Menanyakan Sumber Data Pribadi",
+              "Mendeteksi Indikasi Syarat Deposit",
+            ],
+          },
+          {
+            id: "c1_fatal",
+            label: "Tergiur Komisi Cepat & Ikuti Tugas",
+            actionText:
+              "Wah gampang banget kerjanya! Mau dong Mbak Jessica, ini saya sudah like videonya. Tolong transfer komisinya ya, saya mau lanjut tugas berikutnya.",
+            riskLevel: "fatal",
+            nextStepId: "step_2_deposit_trap",
+          },
+        ],
+      },
+      step_2_confront: {
+        id: "step_2_confront",
+        psychologicalTactic: "Social Proof Palsu & Pamer Bukti Transfer Karyawan",
+        heuristicTelemetry: {
+          indicatorTitle: "Manipulasi Bukti Transfer & Testimoni Fiktif",
+          description:
+            "Pelaku membagikan tangkapan layar bukti transfer palsu dan grup Telegram ramai untuk meyakinkan korban.",
+          riskScore: 94,
+        },
+        messages: [
+          {
+            id: "m4",
+            sender: "persona",
+            text: "Aduh kak, kami legal dan sudah ada ratusan anggota grup Telegram yang tiap hari dapet penghasilan Rp 500.000 - Rp 1.500.000 per hari lho kak. Ini buktinya murni proyek naikin engagement konten digital.",
+            time: "14:04",
+          },
+          {
+            id: "m5",
+            sender: "persona",
+            text: "Kami tidak pernah minta pungutan biaya pendaftaran apapun kok kak. Kakak cuma jalani misi like dulu, reward langsung cair detik itu juga. Coba tugas pertama aja dulu kak, gak ada ruginya kan?",
+            time: "14:05",
+          },
+        ],
+        choices: [
+          {
+            id: "c2_safe",
+            label: "Tolak Tegas & Edukasi Modus Ponzi",
+            actionText:
+              "Memang awalnya tidak bayar pendaftaran dan dikasih reward Rp30.000, tapi tugas ke-4 atau ke-5 pasti disuruh 'Tugas Merchant Deposit Saldo' bertingkat yang ujungnya uang tidak bisa di-withdraw. Modus ini sudah diumumkan Satgas PASTI OJK. Jangan hubungi saya lagi!",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: [
+              "Membedah Alur Scam Bertingkat",
+              "Mengenali Peringatan Satgas PASTI",
+            ],
+          },
+          {
+            id: "c2_fatal",
+            label: "Luluh Melihat Testimoni & Coba Daftar",
+            actionText:
+              "Banyak juga ya yang dapet ratusan ribu per hari. Yaudah Mbak, saya coba jalani tugas pertamanya dulu deh kalau emang gak ada biaya pendaftaran.",
+            riskLevel: "fatal",
+            nextStepId: "step_2_deposit_trap",
+          },
+        ],
+      },
+      step_2_persuade: {
+        id: "step_2_persuade",
+        psychologicalTactic: "Menolak Transparan & Mengalihkan ke Tugas Demo",
+        heuristicTelemetry: {
+          indicatorTitle: "Evasion of Legality Verification",
+          description:
+            "Pelaku mengaburkan identitas perusahaan dan terus mendesak korban memulai tugas demi uang saku cepat.",
+          riskScore: 91,
+        },
+        messages: [
+          {
+            id: "m6",
+            sender: "persona",
+            text: "Data kakak direkomendasikan sistem HRD algoritma LinkedIn kami kak. Kantor pusat kami di Marina Bay Singapura dan perwakilan Jakarta di Sudirman.",
+            time: "14:04",
+          },
+          {
+            id: "m7",
+            sender: "persona",
+            text: "Tenang kak, kami jamin 100% tidak ada biaya deposit di awal. Kakak cukup like 1 video sekarang dan nomor rekening kakak langsung menerima Rp 30.000. Kenapa ragu kalau kakak yang dibayar duluan?",
+            time: "14:05",
+          },
+        ],
+        choices: [
+          {
+            id: "c3_safe",
+            label: "Identifikasi Alibi Palsu & Blokir Kontak",
+            actionText:
+              "Perusahaan resmi tidak menggunakan nomor seluler WhatsApp acak untuk rekrutmen massal. Dalih membayar di awal adalah psikologi manipulasi komitmen agar korban terikat ke tugas deposit jebakan berikutnya. Saya tolak dan laporkan nomor ini.",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: [
+              "Mengenali Jebakan Uang Muka",
+              "Memutus Manipulasi Komitmen Psikologis",
+            ],
+          },
+          {
+            id: "c3_fatal",
+            label: "Percaya Karena Dibayar Duluan",
+            actionText:
+              "Bener juga ya, kan saya yang dibayar duluan bukan saya yang bayar. Yaudah Mbak Jessica, ini saya kerjakan like videonya sekarang.",
+            riskLevel: "fatal",
+            nextStepId: "step_2_deposit_trap",
+          },
+        ],
+      },
+      step_2_deposit_trap: {
+        id: "step_2_deposit_trap",
+        psychologicalTactic: "Jebakan Deposit Tingkat Lanjut (Sunk Cost Fallacy & Escrow Trap)",
+        heuristicTelemetry: {
+          indicatorTitle: "Tuntutan Tugas Merchant / Deposit Wajib",
+          description:
+            "Setelah memberi komisi Rp30.000, pelaku mewajibkan deposit Rp500.000 - Rp2.500.000 dengan iming-iming komisi 40%.",
+          riskScore: 98,
+        },
+        messages: [
+          {
+            id: "m8",
+            sender: "persona",
+            text: "Selamat! Reward tugas pertama Rp 30.000 sudah berhasil ditransfer ke e-wallet kakak. Sekarang kakak sudah naik ke Level Silver Member!",
+            time: "14:08",
+          },
+          {
+            id: "m9",
+            sender: "persona",
+            text: "Untuk membuka paket komisi besar Rp 700.000 di tugas selanjutnya, kakak diwajibkan mengambil 'Misi Merchant Pesanan Khusus'. Cukup transfer deposit saldo Rp 500.000 ke rekening bendahara kami: Bank BCA 829-0192-381 an PT Media Kreasi Bersama. Nanti uang pokok Rp 500.000 + komisi Rp 200.000 langsung cair dalam 10 menit!",
+            time: "14:09",
+          },
+        ],
+        choices: [
+          {
+            id: "c4_safe",
+            label: "Sadar Jebakan Deposit & Langsung Berhenti",
+            actionText:
+              "Nah kan, sudah mulai muncul jebakan deposit! Di mana-mana orang bekerja itu digaji, bukan malah pekerja yang bayar deposit modal ke perusahaan! Komisi Rp30.000 tadi cuma umpan. Saya berhenti dan blokir nomor Anda!",
+            riskLevel: "safe",
+            nextStepId: "outcome_victory",
+            tacticsRevealed: [
+              "Menyadari Jebakan Modal Kerja",
+              "Menghindari Sunk Cost Fallacy",
+            ],
+          },
+          {
+            id: "c4_fatal",
+            label: "Transfer Deposit Rp500.000 Demi Komisi",
+            actionText:
+              "Tadi kan reward Rp30.000 beneran cair, berarti ini beneran. Yaudah Mbak saya transfer depositnya Rp500.000 sekarang biar dapat komisi Rp200.000.",
+            riskLevel: "fatal",
+            nextStepId: "outcome_breach",
+          },
+        ],
+      },
+    },
+    breachOutcome: {
+      headline: "SIMULASI: TERJEBAK SKEMA TASK SCAM & SALDO DEPOSIT TERKUNCI",
+      stolenOtp:
+        "BUKTI TRANSFER: 'Transfer deposit Rp 500.000 berhasil. Sistem membekukan penarikan dan meminta deposit lanjutan Rp 3.500.000.'",
+      drainAmount: "Rp 4.000.000",
+      targetAccount: "Rekening Penampung Sindikat Task Scam (BCA / Mandiri)",
+      compromisedData: [
+        "Korban mentransfer deposit awal Rp500.000, lalu pelaku mengklaim sistem eror karena korban 'salah kode misi'.",
+        "Pelaku memaksa korban menyetor deposit perbaikan sebesar Rp3.500.000 agar uang sebelumnya bisa dicairkan (Sunk Cost Trap).",
+        "Setelah total uang Rp4.000.000 disetor, akun korban di Telegram langsung dihapus dan nomor WhatsApp diblokir.",
+      ],
+      lessonLearned:
+        "Pekerjaan yang sah TIDAK AKAN PERNAH meminta pelamar mentransfer deposit dana atau uang jaminan dalam bentuk apapun. Pemberian komisi kecil di awal hanyalah trik psikologis (Foot-in-the-Door) untuk memancing kepercayaan korban sebelum menguras saldo jutaan rupiah pada tugas merchant deposit bertingkat.",
+      systemWarningText:
+        "⚠️ [Skema Penipuan Tugas Bertingkat Terdeteksi] Permintaan deposit uang modal kerja mengindikasikan 100% sindikat task scam!",
+      drainNotificationText:
+        "NOTIFIKASI BANK: Transfer keluar sebesar Rp 4.000.000 ke sindikat task scam berhasil. Dana tidak pernah dapat dicairkan kembali!",
+      scammerExitText:
+        "(Anda dikeluarkan dari grup tugas dan nomor WhatsApp Anda diblokir oleh admin setelah menolak transfer deposit lanjutan Rp 7.000.000).",
+    },
+    victoryOutcome: {
+      headline: "SIMULASI BERHASIL: ANDA TANGKAL JEBAKAN LOWONGAN FREELANCE BODONG!",
+      score: 100,
+      tacticsFoiled: [
+        "Membongkar ilusi pekerjaan mudah dengan komisi like video yang tidak masuk akal",
+        "Menolak tergiur oleh umpan hadiah kecil di awal percakapan",
+        "Mengenali jebakan tugas merchant / deposit modal kerja bertingkat",
+        "Membentengi diri dari jebakan psikologis rasa rugi (Sunk Cost Fallacy)",
+      ],
+      keyInsight:
+        "Prinsip dasar ketenagakerjaan: Anda bekerja untuk menghasilkan uang, bukan membayar uang untuk bekerja. Segala bentuk lowongan kerja yang mewajibkan deposit saldo, top up poin, atau transfer uang talangan adalah penipuan terorganisir (Task Scam).",
+      scammerConcedeText:
+        "Ya sudah kalau gak mau ambil misi cuannya, slot Level Silver kami berikan ke kandidat lain yang lebih niat cari uang!",
+      defenseNotificationText:
+        "🛡️ Upaya penipuan task scam berhasil digagalkan. Tabungan Anda aman dari skema deposit bodong bertingkat.",
+    },
+    forensicSummary: {
+      targetLabel: "Platform & Rekening Penampung",
+      targetValue: "PT Media Kreasi Bersama (BCA 829-0192-381) & Bot Telegram Task",
+      threatClassification: "Ponzi Task Scam & Advanced Fee Fraud (Tingkat Risiko: 94%)",
+      indicatorLabel: "Skema Manipulasi Komisi",
+      indicatorValue:
+        "Umpan Like Video Rp 30.000 -> Jebakan Misi Merchant Deposit Bertingkat (Rp 500.000 - Rp 5.000.000)",
+      attackImpact:
+        "Kerugian finansial deposit bertingkat, penahanan dana dengan dalih salah kode misi, dan nomor diblokir setelah korban kehabisan modal",
+      officialProcedure:
+        "Pekerjaan resmi tidak pernah memungut deposit uang modal kerja. Verifikasi legalitas perusahaan penyedia kerja di portal Kemnaker / OJK",
+      psychologicalPressure:
+        "Pancingan komisi instan awal, pamer bukti transfer karyawan fiktif, dan jebakan rasa rugi modal tertahan (Foot-in-the-Door & Sunk Cost Fallacy)",
+      decisionPointBreached:
+        "Tergiur komisi berlipat dan menyetor uang deposit ke rekening sindikat penipu",
+      decisionPointSafe:
+        "Menolak tawaran like video berbayar tinggi dan segera berhenti saat muncul klausul deposit uang modal",
+    },
+  },
 };

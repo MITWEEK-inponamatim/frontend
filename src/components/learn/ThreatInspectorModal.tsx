@@ -104,7 +104,9 @@ export function ThreatInspectorModal({
                   <span className="text-slate-900 sm:text-right leading-relaxed">
                     {fileAttachment?.filename.includes("Undangan")
                       ? "Menyamar sebagai surat undangan pernikahan, padahal paket Trojan aksesibilitas"
-                      : "Menyamar sebagai gambar dokumen/foto, padahal berkas aplikasi executable"}
+                      : fileAttachment?.filename.includes("Tilang")
+                        ? "Menyamar sebagai surat tilang kepolisian, padahal berkas Trojan penyadap SMS"
+                        : "Menyamar sebagai gambar dokumen/foto, padahal berkas aplikasi executable"}
                   </span>
                 </div>
 
