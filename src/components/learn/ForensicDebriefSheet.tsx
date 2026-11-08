@@ -31,6 +31,45 @@ export function ForensicDebriefSheet({
   );
 
   const isBreached = status === "breached";
+  const forensics = scenario.forensicSummary ?? {
+    targetLabel: scenario.id === "tarif-bank-phishing" ? "Target / Alamat URL" : "Nama Berkas",
+    targetValue:
+      scenario.id === "tarif-bank-phishing"
+        ? "https://bca-pembaruan-tarif.info/batal-tarif"
+        : "LIHAT_Foto_Paket.apk (4.2 MB)",
+    threatClassification:
+      scenario.id === "tarif-bank-phishing"
+        ? "Credential Harvesting Web Phishing (Tingkat Risiko: 92%)"
+        : "Android SMS Sniffer Trojan (Tingkat Risiko: 85%)",
+    indicatorLabel:
+      scenario.id === "tarif-bank-phishing"
+        ? "Kredensial yang Diincar"
+        : "Izin Berbahaya (Permissions)",
+    indicatorValue:
+      scenario.id === "tarif-bank-phishing"
+        ? "Nomor Kartu ATM (16 Digit), PIN Mobile Banking, Kode OTP"
+        : "RECEIVE_SMS, READ_SMS, INTERNET",
+    attackImpact:
+      scenario.id === "tarif-bank-phishing"
+        ? "Pengambilalihan akun m-Banking secara ilegal dan pengurasan saldo tabungan ke rekening penampung"
+        : "Malware membaca SMS OTP m-Banking di latar belakang dan mengirimkannya ke penipu",
+    officialProcedure:
+      scenario.id === "tarif-bank-phishing"
+        ? "Bank BCA tidak pernah membagikan tautan formulir pembatalan tarif melalui pesan instan WhatsApp"
+        : "Ekspedisi resmi (J&T, JNE, SiCepat) tidak pernah mengirim berkas APK kepada pelanggan",
+    psychologicalPressure:
+      scenario.id === "tarif-bank-phishing"
+        ? "Ancaman auto-debit Rp 150.000/bulan sebelum pukul 17:00 WIB (Loss Aversion)"
+        : "Ancaman retur paket dan denda pembatalan COD jika tidak dicek (False Urgency)",
+    decisionPointBreached:
+      scenario.id === "tarif-bank-phishing"
+        ? "Menyerahkan data nomor kartu ATM dan PIN di formulir web palsu"
+        : "Menyetujui instalasi berkas .apk dari luar kanal resmi",
+    decisionPointSafe:
+      scenario.id === "tarif-bank-phishing"
+        ? "Menolak membuka link dan memilih verifikasi ke Halo BCA 1500888"
+        : "Menolak eksekusi file dan memverifikasi nomor resi secara mandiri",
+  };
 
   return (
     <>
@@ -149,9 +188,7 @@ export function ForensicDebriefSheet({
                   Manipulasi Urgensi
                 </span>
                 <span className="text-slate-900 sm:text-right leading-relaxed">
-                  {scenario.id === "tarif-bank-phishing"
-                    ? "Ancaman auto-debit Rp 150.000/bulan sebelum pukul 17:00 WIB (Loss Aversion)"
-                    : "Ancaman retur paket dan denda pembatalan COD jika tidak dicek (False Urgency)"}
+                  {forensics.psychologicalPressure}
                 </span>
               </div>
 
@@ -165,12 +202,8 @@ export function ForensicDebriefSheet({
                   }`}
                 >
                   {isBreached
-                    ? scenario.id === "tarif-bank-phishing"
-                      ? "Menyerahkan data nomor kartu ATM dan PIN di formulir web palsu"
-                      : "Menyetujui instalasi berkas .apk dari luar kanal resmi"
-                    : scenario.id === "tarif-bank-phishing"
-                      ? "Menolak membuka link dan memilih verifikasi ke Halo BCA 1500888"
-                      : "Menolak eksekusi file dan memverifikasi nomor resi secara mandiri"}
+                    ? forensics.decisionPointBreached
+                    : forensics.decisionPointSafe}
                 </span>
               </div>
 
@@ -179,9 +212,7 @@ export function ForensicDebriefSheet({
                   Prosedur Resmi Instansi
                 </span>
                 <span className="text-slate-900 sm:text-right leading-relaxed">
-                  {scenario.id === "tarif-bank-phishing"
-                    ? "Bank BCA tidak pernah membagikan tautan formulir pembatalan tarif melalui pesan instan WhatsApp"
-                    : "Ekspedisi resmi (J&T, JNE, SiCepat) tidak pernah mengirim berkas APK kepada pelanggan"}
+                  {forensics.officialProcedure}
                 </span>
               </div>
             </div>
@@ -189,14 +220,10 @@ export function ForensicDebriefSheet({
             <div className="overflow-hidden rounded-2xl bg-white shadow-2xs divide-y divide-slate-100">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 p-3.5 text-xs font-normal">
                 <span className="text-slate-500 shrink-0 sm:w-44">
-                  {scenario.id === "tarif-bank-phishing"
-                    ? "Target / Alamat URL"
-                    : "Nama Berkas"}
+                  {forensics.targetLabel}
                 </span>
                 <span className="font-mono text-slate-900 sm:text-right">
-                  {scenario.id === "tarif-bank-phishing"
-                    ? "https://bca-pembaruan-tarif.info/batal-tarif"
-                    : "LIHAT_Foto_Paket.apk (4.2 MB)"}
+                  {forensics.targetValue}
                 </span>
               </div>
 
@@ -205,22 +232,16 @@ export function ForensicDebriefSheet({
                   Klasifikasi Ancaman
                 </span>
                 <span className="text-[#FF3B30] sm:text-right leading-relaxed">
-                  {scenario.id === "tarif-bank-phishing"
-                    ? "Credential Harvesting Web Phishing (Tingkat Risiko: 92%)"
-                    : "Android SMS Sniffer Trojan (Tingkat Risiko: 85%)"}
+                  {forensics.threatClassification}
                 </span>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 p-3.5 text-xs font-normal">
                 <span className="text-slate-500 shrink-0 sm:w-44">
-                  {scenario.id === "tarif-bank-phishing"
-                    ? "Kredensial yang Diincar"
-                    : "Izin Berbahaya (Permissions)"}
+                  {forensics.indicatorLabel}
                 </span>
                 <span className="font-mono text-[11px] text-slate-700 sm:text-right leading-relaxed">
-                  {scenario.id === "tarif-bank-phishing"
-                    ? "Nomor Kartu ATM (16 Digit), PIN Mobile Banking, Kode OTP"
-                    : "RECEIVE_SMS, READ_SMS, INTERNET"}
+                  {forensics.indicatorValue}
                 </span>
               </div>
 
@@ -229,9 +250,7 @@ export function ForensicDebriefSheet({
                   Dampak Penyerangan
                 </span>
                 <span className="text-slate-900 sm:text-right leading-relaxed">
-                  {scenario.id === "tarif-bank-phishing"
-                    ? "Pengambilalihan akun m-Banking secara ilegal dan pengurasan saldo tabungan ke rekening penampung"
-                    : "Malware membaca SMS OTP m-Banking di latar belakang dan mengirimkannya ke penipu"}
+                  {forensics.attackImpact}
                 </span>
               </div>
             </div>

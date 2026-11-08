@@ -102,14 +102,20 @@ export function ThreatInspectorModal({
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 p-3.5 text-xs font-normal">
                   <span className="text-slate-500 shrink-0 sm:w-40">Modus Kamuflase</span>
                   <span className="text-slate-900 sm:text-right leading-relaxed">
-                    Menyamar sebagai gambar foto resi, padahal berkas aplikasi executable
+                    {fileAttachment?.filename.includes("Undangan")
+                      ? "Menyamar sebagai surat undangan pernikahan, padahal paket Trojan aksesibilitas"
+                      : "Menyamar sebagai gambar dokumen/foto, padahal berkas aplikasi executable"}
                   </span>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 p-3.5 text-xs font-normal">
                   <span className="text-slate-500 shrink-0 sm:w-40">Izin Berbahaya</span>
                   <span className="font-mono text-[11px] text-[#FF3B30] sm:text-right leading-relaxed">
-                    RECEIVE_SMS, READ_SMS, INTERNET
+                    {fileAttachment?.dangerousPermissions
+                      ? fileAttachment.dangerousPermissions
+                          .map((p) => p.replace("android.permission.", ""))
+                          .join(", ")
+                      : "RECEIVE_SMS, READ_SMS, INTERNET"}
                   </span>
                 </div>
               </div>
