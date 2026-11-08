@@ -141,8 +141,8 @@ export function RecognizeCard() {
                 {scan.activeTab === "phone"
                   ? `Nomor Indonesia · Format E.164: +${canonicalPhone(scan.number).replace(/[^0-9]/g, "")}`
                   : scan.activeTab === "url"
-                    ? "Inspeksi headless Playwright sandbox"
-                    : "Dekomplikasi Androguard sandbox"}
+                    ? "Pemeriksaan tautan situs"
+                    : "Pemeriksaan berkas aplikasi Android"}
               </p>
             </div>
           </div>
@@ -277,9 +277,8 @@ export function RecognizeCard() {
           <div className="flex min-h-[140px] flex-col justify-between space-y-4">
             {scan.activeTab === "url" && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-normal text-slate-500">
+                <div className="text-xs font-normal text-slate-500">
                   <span>Alamat URL situs yang ingin diperiksa:</span>
-                  <span className="text-[11px] text-slate-400">Playwright Egress Sandbox</span>
                 </div>
                 <textarea
                   rows={3}
@@ -291,16 +290,15 @@ export function RecognizeCard() {
                   className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50/30 p-3 text-xs sm:text-sm font-normal text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:bg-white transition-all"
                 />
                 <p className="text-[11px] font-normal leading-relaxed text-slate-400">
-                  Browser terisolasi akan mendokumentasikan rantai redirect, memeriksa form pencuri kredensial, dan mengambil bukti screenshot secara terlindungi.
+                  Sistem akan mendokumentasikan rantai pengalihan, memeriksa form pencuri data, dan mengambil bukti tangkapan layar secara aman.
                 </p>
               </div>
             )}
 
             {scan.activeTab === "application" && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs font-normal text-slate-500">
+                <div className="text-xs font-normal text-slate-500">
                   <span>Unggah paket berkas Android (.apk):</span>
-                  <span className="text-[11px] text-slate-400">Dekomplikasi Androguard & YARA</span>
                 </div>
 
                 <input
@@ -380,7 +378,7 @@ export function RecognizeCard() {
                     className="mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-0"
                   />
                   <span>
-                    Setuju mengirim sampel APK ke layanan pemindai multi-mesin eksternal (VirusTotal) untuk analisis tambahan. Tanpa persetujuan, hanya dekompilasi lokal Androguard & hash berkas yang dianalisis.
+                    Setuju memverifikasi hash berkas ke basis data intelijen ancaman global untuk analisis tambahan. Tanpa persetujuan, berkas hanya dianalisis secara lokal di server ThreatLens.
                   </span>
                 </label>
               </div>
@@ -401,17 +399,12 @@ export function RecognizeCard() {
                 <Icon icon="solar:restart-bold-duotone" className="h-4 w-4 animate-spin text-[#007AFF]" />
                 <div className="min-w-0 flex-1">
                   <p className="text-slate-900">{scan.scanStep || "Menganalisis indikator forensik..."}</p>
-                  <p className="text-[10px] text-slate-400">Proses pemindaian terisolasi berjalan di lingkungan aman</p>
+                  <p className="text-[10px] text-slate-400">Proses pemindaian berjalan secara aman</p>
                 </div>
               </div>
             )}
 
-            <div className="flex items-center justify-between border-t border-slate-100 pt-3.5">
-              <span className="text-[11px] font-normal text-slate-400">
-                {scan.activeTab === "url"
-                  ? "Inspeksi headless anti-SSRF & DNS pinned"
-                  : "Dekomplikasi non-root sandbox"}
-              </span>
+            <div className="flex items-center justify-end border-t border-slate-100 pt-3.5">
 
               <button
                 type="button"

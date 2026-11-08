@@ -177,7 +177,7 @@ export function ScanRecordResult({
               className="mx-auto h-5 w-5 animate-spin text-slate-500"
             />
             <p className="text-xs font-normal text-slate-700">
-              Analisis masih berlangsung di worker terisolasi ThreatLens.
+              Analisis keamanan masih berlangsung...
             </p>
             <p className="text-[11px] font-normal text-slate-400">
               Halaman ini akan diperbarui otomatis saat proses selesai...

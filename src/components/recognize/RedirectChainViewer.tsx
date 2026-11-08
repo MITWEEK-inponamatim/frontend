@@ -106,7 +106,6 @@ export function RedirectChainViewer({ chain }: { chain: RedirectHop[] }) {
           <span className="font-medium text-slate-700">Rantai pengalihan alamat:</span>
           <span>({chain.length} langkah)</span>
         </div>
-        <span className="text-[11px] font-mono text-slate-400">Playwright network tracer</span>
       </div>
 
       {/* Desktop View: Horizontal Flow Pipeline */}

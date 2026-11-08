@@ -52,7 +52,7 @@ export function BrowserScreenshotViewer({
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-normal text-slate-500">
           <div className="flex items-center gap-1.5">
             <Icon icon="solar:camera-linear" className="h-3.5 w-3.5 text-slate-400" />
-            <span className="font-medium text-slate-700">Tangkapan layar browser sandbox:</span>
+            <span className="font-medium text-slate-700">Tangkapan layar tampilan situs:</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -101,11 +101,7 @@ export function BrowserScreenshotViewer({
               <span className="truncate">{targetUrl || displayDomain}</span>
             </div>
 
-            {/* Sandbox Egress Indicator */}
-            <div className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono font-medium text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-md shrink-0">
-              <Icon icon="solar:shield-check-linear" className="h-3 w-3 text-emerald-600" />
-              <span>Sandbox Egress</span>
-            </div>
+            <div className="w-12 shrink-0" />
           </div>
 
           {/* Screenshot Viewport */}
@@ -113,14 +109,14 @@ export function BrowserScreenshotViewer({
             {hasError ? (
               <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400 space-y-2">
                 <Icon icon="solar:shield-warning-linear" className="h-8 w-8 text-slate-500" />
-                <p className="text-xs">Tangkapan layar tidak dapat dimuat atau telah kedaluwarsa dari storage worker.</p>
+                <p className="text-xs">Tangkapan layar tidak dapat dimuat atau telah kedaluwarsa.</p>
               </div>
             ) : (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={screenshotUrl}
-                  alt="Tangkapan layar halaman situs hasil pemindaian Playwright"
+                  alt="Tangkapan layar halaman situs target"
                   loading="lazy"
                   onError={() => setHasError(true)}
                   className={`w-full max-h-[420px] object-cover object-top transition-all duration-300 ${
@@ -177,7 +173,7 @@ export function BrowserScreenshotViewer({
           >
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono text-slate-300">
-                Inspeksi Sandbox: {targetUrl || displayDomain}
+                Inspeksi Visual: {targetUrl || displayDomain}
               </span>
             </div>
 
@@ -204,14 +200,14 @@ export function BrowserScreenshotViewer({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={screenshotUrl}
-              alt="Inspeksi resolusi penuh tangkapan layar Playwright"
+              alt="Inspeksi resolusi penuh tangkapan layar"
               className="max-h-[82vh] max-w-full rounded-xl object-contain shadow-2xl border border-slate-800"
             />
           </div>
 
           {/* Modal Footer */}
           <div className="pt-2 text-center text-[11px] text-slate-500 font-mono">
-            ThreatLens Playwright Sandbox Egress • Diambil saat audit tautan
+            Dokumentasi visual ThreatLens • Diambil saat audit tautan
           </div>
         </div>
       )}
