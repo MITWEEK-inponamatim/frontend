@@ -123,13 +123,17 @@ export default function LoginPage() {
 
       {/* Main Content Area */}
       <main className="relative z-10 w-full max-w-5xl mx-auto flex-1 flex items-center justify-center py-6 sm:py-8 px-4 sm:px-6">
-        <div className="w-full flex justify-center">
+        <div className="w-full max-w-[420px] flex flex-col items-center">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 mb-4 sm:mb-5">
+            Login
+          </h1>
+
           {/* Form Card (Mobile-first centered container, matching mockup) */}
-          <div className="w-full max-w-[420px] bg-white border border-slate-200/90 rounded-3xl p-7 sm:p-9 shadow-sm flex flex-col items-center text-center">
+          <div className="w-full bg-white border border-slate-200/90 rounded-3xl p-7 sm:p-9 shadow-sm flex flex-col items-center text-center">
             {/* Title & Subtitle */}
-            <h1 className="text-2xl sm:text-3xl font-normal tracking-tight text-slate-900">
+            <h2 className="text-2xl sm:text-3xl font-normal tracking-tight text-slate-900">
               Hi There!
-            </h1>
+            </h2>
             <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-xs">
               Selesaikan verifikasi keamanan singkat di bawah untuk melanjutkan
               masuk dengan Google.
