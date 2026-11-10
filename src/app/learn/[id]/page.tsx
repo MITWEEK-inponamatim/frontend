@@ -1,9 +1,14 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar/Navbar";
 import { IdleSessionMonitor } from "@/components/auth/IdleSessionMonitor";
 import { RoleplaySimulator } from "@/components/learn/RoleplaySimulator";
 import { ROLEPLAY_DETAILS } from "@/lib/roleplayData";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Simulasi Kasus",
+};
 
 type ProfileMetadata = {
   avatar_url?: string;

@@ -1,8 +1,13 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar/Navbar";
 import { IdleSessionMonitor } from "@/components/auth/IdleSessionMonitor";
 import { ScenarioSelector } from "@/components/learn/ScenarioSelector";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Modul Edukasi",
+};
 
 type ProfileMetadata = {
   avatar_url?: string;

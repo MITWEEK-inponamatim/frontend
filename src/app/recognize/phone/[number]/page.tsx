@@ -1,10 +1,15 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { IdleSessionMonitor } from "@/components/auth/IdleSessionMonitor";
 import { PhoneNumberResult } from "@/components/recognize/PhoneNumberResult";
 import { createClient } from "@/lib/supabase/server";
 import { phoneSlug } from "@/lib/phone";
+
+export const metadata: Metadata = {
+  title: "Hasil Analisis Nomor",
+};
 
 type ProfileMetadata = { avatar_url?: string; picture?: string; full_name?: string; name?: string };
 

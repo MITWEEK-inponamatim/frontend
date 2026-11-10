@@ -1,8 +1,13 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { HistoryList } from "@/components/history/HistoryList";
 import { IdleSessionMonitor } from "@/components/auth/IdleSessionMonitor";
 import { Navbar } from "@/components/navbar/Navbar";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Riwayat Pemindaian",
+};
 
 type ProfileMetadata = {
   avatar_url?: string;

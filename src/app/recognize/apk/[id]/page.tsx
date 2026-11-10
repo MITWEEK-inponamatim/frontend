@@ -1,10 +1,15 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { Navbar, type Account } from "@/components/navbar/Navbar";
 import { IdleSessionMonitor } from "@/components/auth/IdleSessionMonitor";
 import { ScanRecordResult } from "@/components/recognize/ScanRecordResult";
 import { createClient } from "@/lib/supabase/server";
 import { isScanId } from "@/lib/paths";
+
+export const metadata: Metadata = {
+  title: "Hasil Analisis APK",
+};
 
 type ProfileMetadata = { avatar_url?: string; picture?: string; full_name?: string; name?: string };
 

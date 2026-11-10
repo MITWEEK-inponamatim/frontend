@@ -1,9 +1,14 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { CommunityShell } from "@/components/community/CommunityShell";
 import { IdleSessionMonitor } from "@/components/auth/IdleSessionMonitor";
 import { PostThread } from "@/components/community/PostThread";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Detail Diskusi",
+};
 
 type ProfileMetadata = { avatar_url?: string; picture?: string; full_name?: string; name?: string };
 

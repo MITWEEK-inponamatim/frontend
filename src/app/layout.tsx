@@ -40,8 +40,20 @@ const ppNeueMontreal = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Anti-Scam AI Platform | Recognize, Learn, Act",
-  description: "Advanced AI-powered Scam Detection Platform. Recognize threats in links, APK files, and phone numbers.",
+  title: {
+    default: "ThreatLens - Platform AI Anti-Scam",
+    template: "%s | ThreatLens",
+  },
+  description: "Platform deteksi dan mitigasi penipuan digital berbasis kecerdasan buatan. Kenali ancaman pada tautan, file APK, dan nomor telepon.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({

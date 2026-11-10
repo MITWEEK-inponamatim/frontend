@@ -1,8 +1,13 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { RecentHistoryCard } from "@/components/history/RecentHistoryCard";
 import { IdleSessionMonitor } from "@/components/auth/IdleSessionMonitor";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Deteksi Ancaman",
+};
 
 type ProfileMetadata = {
   avatar_url?: string;

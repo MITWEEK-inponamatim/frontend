@@ -1,10 +1,15 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { Navbar, type Account } from "@/components/navbar/Navbar";
 import { IdleSessionMonitor } from "@/components/auth/IdleSessionMonitor";
 import { FirstAidChecklist } from "@/components/guide/FirstAidChecklist";
 import { BankDirectory } from "@/components/guide/BankDirectory";
 import { EmergencyHotlines } from "@/components/guide/EmergencyHotlines";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Panduan Keamanan",
+};
 
 type ProfileMetadata = {
   avatar_url?: string;

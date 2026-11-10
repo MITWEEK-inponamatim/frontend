@@ -6,7 +6,10 @@ import type { Metadata } from "next";
  * same prefix must render without one.
  */
 export const metadata: Metadata = {
-  title: "Admin - Threatlens",
+  title: {
+    default: "Panel Moderasi",
+    template: "%s | ThreatLens",
+  },
   robots: { index: false, follow: false },
 };
 
