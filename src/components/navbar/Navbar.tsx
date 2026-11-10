@@ -48,7 +48,7 @@ export function Navbar({ account = null }: { account?: Account | null }) {
 
   return (
     <>
-      <header className="w-full relative z-20 pt-4 sm:pt-5 px-4 sm:px-8 md:px-12">
+      <header className="sticky top-0 z-30 w-full bg-white border-b border-slate-100 py-3 sm:py-3.5 px-4 sm:px-8 md:px-12">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-6">
           {/* Sisi Kiri: Brand & Logo */}
           <div className="flex items-center gap-3 shrink-0">

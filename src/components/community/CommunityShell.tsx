@@ -13,9 +13,7 @@ export function CommunityShell({
 }) {
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col justify-between">
-      <div className="w-full bg-white border-b border-slate-100 pb-3">
-        <Navbar account={account} />
-      </div>
+      <Navbar account={account} />
 
       <main className="w-full flex-1">{children}</main>
 

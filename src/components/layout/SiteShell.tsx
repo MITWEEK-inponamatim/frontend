@@ -27,11 +27,12 @@ export function SiteShell({
   children?: ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen w-full bg-white text-slate-900 overflow-x-hidden flex flex-col justify-between">
+    <div className="relative min-h-screen w-full bg-white text-slate-900 flex flex-col justify-between">
+      <Navbar account={account} />
+
       {/* Hero viewport with dedicated side ornaments */}
-      <div className="relative w-full min-h-screen flex flex-col justify-between overflow-hidden">
+      <div className="relative w-full min-h-[calc(100vh-65px)] flex flex-col justify-between">
         <SideOrnaments />
-        <Navbar account={account} />
         <div className="relative z-10 flex-1 flex flex-col justify-center">
           <HeroSection scanner={scanner} hideCategoryTags={!showEducationalSections}>
             {children}

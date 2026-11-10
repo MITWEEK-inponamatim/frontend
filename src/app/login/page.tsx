@@ -112,12 +112,11 @@ export default function LoginPage() {
           : "";
 
   return (
-    <div className="relative min-h-screen bg-white text-slate-900 flex flex-col justify-between overflow-hidden">
+    <div className="relative min-h-screen bg-white text-slate-900 flex flex-col justify-between">
       {/* Background Circular/Elliptical Red Accent Gradient at the Top (Behind Card) */}
-      <div
-        className="absolute -top-40 sm:-top-56 lg:-top-72 left-1/2 -translate-x-1/2 w-[580px] sm:w-[820px] md:w-[1100px] lg:w-[1550px] xl:w-[1550px] h-[500px] sm:h-[650px] lg:h-[620px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.42)_0%,rgba(239,68,68,0.22)_40%,rgba(239,68,68,0.06)_65%,transparent_75%)] pointer-events-none"
-        aria-hidden="true"
-      />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute -top-40 sm:-top-56 lg:-top-72 left-1/2 -translate-x-1/2 w-[580px] sm:w-[820px] md:w-[1100px] lg:w-[1550px] xl:w-[1550px] h-[500px] sm:h-[650px] lg:h-[620px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.42)_0%,rgba(239,68,68,0.22)_40%,rgba(239,68,68,0.06)_65%,transparent_75%)]" />
+      </div>
 
       {/* Universal Top Navigation Bar */}
       <Navbar />
