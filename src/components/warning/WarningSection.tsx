@@ -1,11 +1,11 @@
 import React from "react";
-import { SuccessToast, InfoToast, ErrorToast } from "@/components/ui/Toast";
+import { Icon } from "@/components/ui/Icon";
 
 export function WarningSection() {
   return (
     <section className="w-full bg-white text-slate-900 border-t border-gray-100 py-16 sm:py-24 px-4 sm:px-8 md:px-12 overflow-hidden">
       <div className="max-w-7xl mx-auto space-y-20 sm:space-y-28">
-        {/* ROW 1: Graphic (Left) & Content (Right) - Sesuai Foto 2 */}
+        {/* ROW 1: Graphic (Left) & Content (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
           {/* Sisi Kiri: Dark Telemetry Card dengan Aksen Lime Circle */}
           <div className="lg:col-span-6 flex justify-center lg:justify-start">
@@ -29,7 +29,7 @@ export function WarningSection() {
                   </span>
                 </div>
 
-                {/* SVG Line Chart (seperti di referensi foto) */}
+                {/* SVG Line Chart */}
                 <div className="w-full h-32 flex items-end mb-4">
                   <svg
                     viewBox="0 0 300 100"
@@ -77,7 +77,7 @@ export function WarningSection() {
           </div>
         </div>
 
-        {/* ROW 2: Content (Left) & Graphic (Right) - Sesuai Foto 2 */}
+        {/* ROW 2: Content (Left) & Graphic (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
           {/* Sisi Kiri: Headline & Deskripsi */}
           <div className="lg:col-span-6 flex flex-col justify-center text-left order-2 lg:order-1">
@@ -94,29 +94,82 @@ export function WarningSection() {
             </p>
           </div>
 
-          {/* Sisi Kanan: Toast Notifications Stack Sesuai Desain */}
+          {/* Sisi Kanan: Floating Notification Pills dengan Aksen Lime Circle */}
           <div className="lg:col-span-6 flex justify-center lg:justify-end order-1 lg:order-2">
             <div className="relative w-full max-w-md flex items-center justify-center py-6">
-              {/* Background Accent Circle */}
+              {/* Vibrant Lime Accent Circle di Belakang */}
               <div
-                className="absolute right-0 top-1/2 -translate-y-1/2 w-52 h-52 sm:w-64 sm:h-64 bg-slate-100/80 rounded-full z-0 pointer-events-none"
+                className="absolute right-0 top-1/2 -translate-y-1/2 w-52 h-52 sm:w-64 sm:h-64 bg-[#d9f94a] rounded-full z-0"
                 aria-hidden="true"
               />
 
-              {/* Toast Notifications Stack */}
-              <div className="relative z-10 w-full space-y-3.5">
-                <SuccessToast
-                  title="Perlindungan Real-Time Aktif"
-                  description="Sistem otomatis berhasil mengamankan akses data & rekening"
-                />
-                <InfoToast
-                  title="Domain Phishing Terdeteksi"
-                  description="Alamat bca-verifikasi.biz.id masuk dalam daftar pemblokiran"
-                />
-                <ErrorToast
-                  title="Izin SMS Intercept Berbahaya"
-                  description="Berkas Undangan-Pernikahan.apk mencoba membaca kode OTP"
-                />
+              {/* Floating Pill Cards Stack */}
+              <div className="relative z-10 w-full space-y-3.5 pl-4 sm:pl-0">
+                <div className="bg-white/95 backdrop-blur-sm border border-gray-200/90 shadow-lg rounded-2xl p-3.5 sm:p-4 flex items-center justify-between text-left max-w-xs sm:max-w-sm translate-x-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                      <Icon
+                        icon="solar:danger-triangle-bold-duotone"
+                        className="w-4 h-4"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-slate-900">
+                        Izin SMS Intercept
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        Berkas Undangan.apk
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full">
+                    Bahaya
+                  </span>
+                </div>
+
+                <div className="bg-white/95 backdrop-blur-sm border border-gray-200/90 shadow-lg rounded-2xl p-3.5 sm:p-4 flex items-center justify-between text-left max-w-xs sm:max-w-sm -translate-x-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                      <Icon
+                        icon="solar:link-broken-bold-duotone"
+                        className="w-4 h-4"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-slate-900">
+                        Domain Phishing Terdeteksi
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        bca-verifikasi.biz.id
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full">
+                    Palsu
+                  </span>
+                </div>
+
+                <div className="bg-white/95 backdrop-blur-sm border border-gray-200/90 shadow-lg rounded-2xl p-3.5 sm:p-4 flex items-center justify-between text-left max-w-xs sm:max-w-sm translate-x-1">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                      <Icon
+                        icon="solar:shield-check-bold-duotone"
+                        className="w-4 h-4"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-slate-900">
+                        Perlindungan Rekening
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        Pemblokiran Otomatis
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+                    Aman
+                  </span>
+                </div>
               </div>
             </div>
           </div>

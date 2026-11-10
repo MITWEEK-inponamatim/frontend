@@ -204,7 +204,7 @@ html, body {
   background-color: #ffffff;
   color: #09090b;
   font-family: var(--font-pp-neue-montreal), "PP Neue Montreal Book", "PP Neue Montreal", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
