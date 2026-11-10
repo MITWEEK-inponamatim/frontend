@@ -6,11 +6,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { PostCard } from "@/components/community/PostCard";
 import { DangerousNumberList } from "@/components/community/DangerousNumberList";
+import { MobileNavLink } from "@/components/community/MobileNavLink";
 import { DangerousNumberBanner } from "@/components/community/DangerousNumberBanner";
 import { CreatePostPanel } from "@/components/community/CreatePostPanel";
 import { ReportNumberPanel } from "@/components/community/ReportNumberPanel";
 import { NumberHandle } from "@/components/community/NumberHandle";
 import { useCommunity, type CommunityTab } from "@/hooks/useCommunity";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { canonicalPhone, phoneSlug } from "@/lib/phone";
 import { displayNumber, type DangerousNumber } from "@/lib/community";
 import { api } from "@/lib/api";
@@ -49,6 +51,7 @@ export function CommunityBoard({ tab }: { tab: CommunityTab }) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const isAdmin = useIsAdmin();
 
   const rawNumber = params.get("nomor") ?? "";
   const number = canonicalPhone(rawNumber);
@@ -182,34 +185,36 @@ export function CommunityBoard({ tab }: { tab: CommunityTab }) {
             </div>
 
             {/* Tools Quick Links */}
-            <div className="space-y-1 pt-3 border-t border-slate-100 text-left">
-              <span className="px-3 text-[11px] font-normal uppercase tracking-wider text-slate-400 block text-left">
-                Pintasan Fitur
-              </span>
-              <div className="space-y-0.5 pt-1 text-left">
-                <Link
-                  href="/recognize"
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
-                >
-                  <Icon icon="solar:shield-check-linear" className="h-4 w-4 text-slate-400" />
-                  <span>Pindai Target</span>
-                </Link>
-                <Link
-                  href="/history"
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
-                >
-                  <Icon icon="solar:history-linear" className="h-4 w-4 text-slate-400" />
-                  <span>Riwayat Scan</span>
-                </Link>
-                <Link
-                  href="/learn"
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
-                >
-                  <Icon icon="solar:book-2-linear" className="h-4 w-4 text-slate-400" />
-                  <span>Simulasi Belajar</span>
-                </Link>
+            {!isAdmin && (
+              <div className="space-y-1 pt-3 border-t border-slate-100 text-left">
+                <span className="px-3 text-[11px] font-normal uppercase tracking-wider text-slate-400 block text-left">
+                  Pintasan Fitur
+                </span>
+                <div className="space-y-0.5 pt-1 text-left">
+                  <Link
+                    href="/recognize"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                  >
+                    <Icon icon="solar:shield-check-linear" className="h-4 w-4 text-slate-400" />
+                    <span>Pindai Target</span>
+                  </Link>
+                  <Link
+                    href="/history"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                  >
+                    <Icon icon="solar:history-linear" className="h-4 w-4 text-slate-400" />
+                    <span>Riwayat Scan</span>
+                  </Link>
+                  <Link
+                    href="/learn"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                  >
+                    <Icon icon="solar:book-2-linear" className="h-4 w-4 text-slate-400" />
+                    <span>Simulasi Belajar</span>
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="p-3 text-[11px] font-normal leading-relaxed text-slate-400 text-left">
@@ -352,7 +357,7 @@ export function CommunityBoard({ tab }: { tab: CommunityTab }) {
           ) : (
             <div>
               {feed.posts.map((post) => (
-                <PostCard key={post.id} post={post} onVote={feed.vote} />
+                <PostCard key={post.id} post={post} onVote={feed.vote} onRemove={feed.remove} />
               ))}
             </div>
           )}
@@ -438,20 +443,8 @@ export function CommunityBoard({ tab }: { tab: CommunityTab }) {
         aria-label="Navigasi Mobile"
         className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-slate-100 bg-white/95 backdrop-blur-sm py-2 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] md:hidden shadow-lg"
       >
-        <Link
-          href="/"
-          className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-500 hover:text-slate-900 transition-colors"
-        >
-          <Icon icon="solar:home-2-linear" className="h-5 w-5" />
-          <span>Beranda</span>
-        </Link>
-        <Link
-          href="/recognize"
-          className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-500 hover:text-slate-900 transition-colors"
-        >
-          <Icon icon="solar:magnifer-linear" className="h-5 w-5" />
-          <span>Pindai</span>
-        </Link>
+        <MobileNavLink href={isAdmin ? null : "/"} icon="solar:home-2-linear" label="Beranda" />
+        <MobileNavLink href={isAdmin ? null : "/recognize"} icon="solar:magnifer-linear" label="Pindai" />
         <Link
           href="/community/latest"
           className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-900 transition-colors"
@@ -481,13 +474,7 @@ export function CommunityBoard({ tab }: { tab: CommunityTab }) {
             {tab === "dangerous" ? "Lapor" : "Tulis"}
           </span>
         </button>
-        <Link
-          href="/guide"
-          className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-500 hover:text-slate-900 transition-colors"
-        >
-          <Icon icon="solar:book-2-linear" className="h-5 w-5" />
-          <span>Panduan</span>
-        </Link>
+        <MobileNavLink href={isAdmin ? null : "/guide"} icon="solar:book-2-linear" label="Panduan" />
       </nav>
 
       <CreatePostPanel

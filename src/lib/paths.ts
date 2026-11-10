@@ -10,7 +10,10 @@ const COMMUNITY_TAB = /^\/community\/(latest|popular|phone)$/;
 // One finished check of a link or an APK, addressed by its scan id: that is what the history list
 // links to, so a round trip through the login page has to keep it.
 const SCAN_RESULT = new RegExp(`^/recognize/(url|apk)/${UUID}$`);
-const ALLOWED = ["/", "/recognize", "/history", "/community", "/learn", "/guide"];
+const ALLOWED = ["/", "/recognize", "/history", "/community", "/learn", "/guide", "/admin"];
+// A moderator whose session expires mid-decision has to land back at the same page, not at the
+// scanner: the desk's three pages are the only addresses it has.
+const ADMIN_DESK = /^\/admin\/(dasbor|laporan|posting)$/;
 
 const SCAN_ID = new RegExp(`^${UUID}$`);
 
@@ -38,7 +41,20 @@ export function scanResultPath(type: string, id: string, inputRef?: string | nul
   return null;
 }
 
-export function safeNext(path: string | null | undefined) {
-  if (!path || !path.startsWith("/") || path.startsWith("//")) return "/recognize";
-  return ALLOWED.includes(path) || PHONE_PAGE.test(path) || COMMUNITY_POST.test(path) || COMMUNITY_TAB.test(path) || SCAN_RESULT.test(path) ? path : "/recognize";
+export function safeNext(path: string | null | undefined, fallback = "/recognize") {
+  if (!path || !path.startsWith("/") || path.startsWith("//")) return fallback;
+  return ALLOWED.includes(path) || ADMIN_DESK.test(path) || PHONE_PAGE.test(path) || COMMUNITY_POST.test(path) || COMMUNITY_TAB.test(path) || SCAN_RESULT.test(path)
+    ? path
+    : fallback;
+}
+
+/**
+ * Where the moderator door sends an account it has just accepted. Only the desk's own pages: a
+ * `next` pointing somewhere else would turn a sign-in page into a detour. `/admin` itself is never
+ * an answer either — it is the door, and forwarding a signed-in moderator to it would bounce
+ * straight back here. Without a `next`, the dasbor is the front page of the desk.
+ */
+export function safeAdminNext(path: string | null | undefined) {
+  const target = safeNext(path, "/admin/dasbor");
+  return ADMIN_DESK.test(target) ? target : "/admin/dasbor";
 }

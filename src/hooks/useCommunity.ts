@@ -91,5 +91,22 @@ export function useCommunity(tab: CommunityTab, number = "") {
     }
   }, [posts]);
 
-  return { posts, numbers, loading, loadingMore, hasMore, errorMessage, loadMore, refresh, vote };
+  // Deleting is the one write that makes a row disappear, so the feed drops it in place instead of
+  // refetching: a refetch jumps the page back to the top while somebody is reading. The paging
+  // cursor moves with the row, or the next page would skip the story that slid into its place.
+  const remove = useCallback(async (postID: string) => {
+    const snapshot = posts;
+    setPosts(snapshot.filter((post) => post.id !== postID));
+    try {
+      await api(`/api/v1/community/posts/${postID}`, { method: "DELETE" });
+      offset.current = Math.max(0, offset.current - 1);
+      return true;
+    } catch (failure) {
+      setPosts(snapshot);
+      setErrorMessage(communityMessage(failure instanceof Error ? failure.message : null));
+      return false;
+    }
+  }, [posts]);
+
+  return { posts, numbers, loading, loadingMore, hasMore, errorMessage, loadMore, refresh, vote, remove };
 }

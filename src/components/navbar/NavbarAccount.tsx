@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
+import { ConfirmButton } from "@/components/ui/ConfirmDialog";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 
@@ -15,8 +16,19 @@ export type AccountProps = {
 
 /**
  * Account badge with embedded compact logout trigger and guest login CTA.
+ *
+ * `deskHref` replaces that trigger with the way back to the moderation desk. A moderator who came
+ * over from `/admin` to read a story as a citizen is stuck here otherwise: every button on this
+ * page returns to the citizen board, and typing the desk address by hand is not a way out. Their
+ * logout is not lost — the desk rail has it.
  */
-export function NavbarAccount({ account }: { account?: AccountProps | null }) {
+export function NavbarAccount({
+  account,
+  deskHref,
+}: {
+  account?: AccountProps | null;
+  deskHref?: string;
+}) {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -27,6 +39,7 @@ export function NavbarAccount({ account }: { account?: AccountProps | null }) {
     }
     await createClient().auth.signOut();
     router.replace("/");
+    return true;
   };
 
   if (!account) {
@@ -76,16 +89,38 @@ export function NavbarAccount({ account }: { account?: AccountProps | null }) {
       {/* Subtle Separator */}
       <span className="hidden sm:block h-3.5 w-px bg-slate-200" aria-hidden="true" />
 
-      {/* Integrated Logout Icon Action */}
-      <button
-        type="button"
-        onClick={handleLogout}
-        title="Keluar dari akun"
-        aria-label="Keluar dari akun"
-        className="p-1 text-slate-400 hover:text-red-600 transition-colors cursor-pointer rounded-full hover:bg-red-50/50"
-      >
-        <Icon icon="solar:logout-2-bold-duotone" className="h-3.5 w-3.5" />
-      </button>
+      {/* Integrated Logout Icon Action, or the desk's way home for somebody who has one */}
+      {deskHref ? (
+        <Link
+          href={deskHref}
+          title="Kembali ke meja moderasi"
+          className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100/70 hover:text-slate-900"
+        >
+          <Icon icon="solar:arrow-left-linear" className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="sr-only">Kembali ke meja moderasi</span>
+        </Link>
+      ) : (
+        <ConfirmButton
+          onConfirm={handleLogout}
+          triggerTitle="Keluar dari akun"
+          triggerClassName="p-1 text-slate-400 hover:text-red-600 transition-colors cursor-pointer rounded-full hover:bg-red-50/50"
+          label={
+            <>
+              <Icon icon="solar:logout-2-bold-duotone" className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="sr-only">Keluar dari akun</span>
+            </>
+          }
+          confirmTitle="Keluar dari akun?"
+          confirmLabel="Ya, keluar"
+          busyLabel="Keluar..."
+          body={
+            <p>
+              Sesi di perangkat ini ditutup. Cerita dan riwayat pindai Anda tetap tersimpan — masuk lagi
+              kapan pun untuk membukanya kembali.
+            </p>
+          }
+        />
+      )}
     </div>
   );
 }

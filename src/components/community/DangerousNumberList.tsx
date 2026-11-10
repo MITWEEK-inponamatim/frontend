@@ -45,7 +45,9 @@ export function DangerousNumberList({ numbers }: { numbers: DangerousNumber[] })
                 </div>
 
                 <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs font-normal text-slate-500">
-                  <span className="font-normal">{row.verified_reporters} warga berbeda</span>
+                  <span className="font-normal">
+                    {row.verified_reporters === 1 ? "1 warga" : `${row.verified_reporters} warga berbeda`}
+                  </span>
                   <span aria-hidden="true">·</span>
                   <span className="font-normal">{row.community_posts} cerita komunitas</span>
                   {row.last_report_at && (

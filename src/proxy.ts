@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { safeNext } from "@/lib/paths";
+import { safeAdminNext, safeNext } from "@/lib/paths";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -12,8 +12,14 @@ export async function proxy(request: NextRequest) {
   if (path === "/" && !user && ["click", "submit", "keydown"].includes(request.headers.get("x-landing-interaction") ?? "")) {
     const login = new URL("/login", request.url); login.searchParams.set("next", "/recognize"); return NextResponse.redirect(login);
   }
-  if (!user && !["/", "/login", "/auth/callback"].includes(path)) {
-    const login = new URL("/login", request.url); login.searchParams.set("next", safeNext(path)); return NextResponse.redirect(login);
+  // The desk is entered through its own door: a moderator sent to the citizen login would come back
+  // without the role being checked, and would have to find the way to /admin by hand.
+  if (!user && !["/", "/login", "/auth/callback", "/admin/login"].includes(path)) {
+    const door = path.startsWith("/admin") ? "/admin/login" : "/login";
+    const login = new URL(door, request.url);
+    // /admin already IS the door, so it is followed bare; a deeper address is kept as the destination.
+    if (path !== "/admin") login.searchParams.set("next", door === "/admin/login" ? safeAdminNext(path) : safeNext(path));
+    return NextResponse.redirect(login);
   }
   if (user && path === "/login") return NextResponse.redirect(new URL(safeNext(request.nextUrl.searchParams.get("next")), request.url));
   return response;

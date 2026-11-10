@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { phoneSlug } from "@/lib/phone";
 import { NavbarLogo } from "./NavbarLogo";
 import { NavbarLinks } from "./NavbarLinks";
@@ -11,6 +12,9 @@ import { MenuDrawer } from "./MenuDrawer";
 import { ContactModal } from "./ContactModal";
 
 export type Account = AccountProps;
+
+// The queue a moderator was reading from. Wherever they entered the board, the way home is the desk.
+const DESK_HREF = "/admin/posting";
 
 /**
  * Universal responsive top navigation bar orchestrating branding, center search or routes,
@@ -22,8 +26,13 @@ export function Navbar({ account = null }: { account?: Account | null }) {
   const [communityQuery, setCommunityQuery] = useState("");
   const pathname = usePathname();
   const router = useRouter();
+  const isAdmin = useIsAdmin();
 
   const isCommunity = pathname.startsWith("/community");
+  // A moderator reading the board is a moderator at work: the exits to the scanner, the help desk
+  // and the feature shortcuts only send them away from the queue they came to check, and the desk
+  // itself is the one place they can get back to. Everyone else keeps the normal navigation.
+  const atDesk = isCommunity && isAdmin;
 
   const handleCommunitySearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,16 +52,18 @@ export function Navbar({ account = null }: { account?: Account | null }) {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-6">
           {/* Sisi Kiri: Brand & Logo */}
           <div className="flex items-center gap-3 shrink-0">
-            <NavbarLogo href={account ? "/recognize" : "/"} />
-            <button
-              type="button"
-              onClick={() => setIsContactOpen(true)}
-              className="hidden xl:inline-flex items-center gap-2 text-xs font-normal tracking-tight text-slate-500 hover:text-red-600 transition-colors cursor-pointer py-1 ml-2"
-              aria-label="Buka bantuan dan hubungi kami"
-            >
-              <span className="w-3.5 h-[1.5px] bg-slate-300 transition-all rounded-full" />
-              <span>Bantuan</span>
-            </button>
+            <NavbarLogo href={atDesk ? null : account ? "/recognize" : "/"} />
+            {!atDesk && (
+              <button
+                type="button"
+                onClick={() => setIsContactOpen(true)}
+                className="hidden xl:inline-flex items-center gap-2 text-xs font-normal tracking-tight text-slate-500 hover:text-red-600 transition-colors cursor-pointer py-1 ml-2"
+                aria-label="Buka bantuan dan hubungi kami"
+              >
+                <span className="w-3.5 h-[1.5px] bg-slate-300 transition-all rounded-full" />
+                <span>Bantuan</span>
+              </button>
+            )}
           </div>
 
           {/* Sisi Tengah: Global Search pada Komunitas ATAU Navigasi Rute Utama */}
@@ -78,19 +89,23 @@ export function Navbar({ account = null }: { account?: Account | null }) {
 
           {/* Sisi Kanan: Status Akun / Masuk & Drawer Menu (Mobile Only) */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <NavbarAccount account={account} />
+            <NavbarAccount account={account} deskHref={atDesk ? DESK_HREF : undefined} />
 
-            {/* Tombol Hamburger: Khusus Device Small / Mobile */}
-            <button
-              type="button"
-              onClick={() => setIsMenuOpen(true)}
-              className="md:hidden group inline-flex flex-col justify-center items-end gap-1.5 w-8 h-8 p-1 text-slate-900 hover:text-red-600 transition-colors cursor-pointer"
-              aria-expanded={isMenuOpen}
-              aria-label="Buka menu utama"
-            >
-              <span className="w-5 h-[1.5px] bg-slate-900 group-hover:bg-red-600 transition-all rounded-full" />
-              <span className="w-3.5 h-[1.5px] bg-slate-900 group-hover:bg-red-600 transition-all rounded-full" />
-            </button>
+            {/* Tombol Hamburger: Khusus Device Small / Mobile. Bagi moderator di papan, pintunya ditutup
+                sekalian: isi drawer hanya jalan keluar (Pindai, Riwayat, Belajar, Panduan), dan satu-satunya
+                tujuan yang mereka butuhkan sudah ada di sampingnya — panah kembali ke meja. */}
+            {!atDesk && (
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen(true)}
+                className="md:hidden group inline-flex flex-col justify-center items-end gap-1.5 w-8 h-8 p-1 text-slate-900 hover:text-red-600 transition-colors cursor-pointer"
+                aria-expanded={isMenuOpen}
+                aria-label="Buka menu utama"
+              >
+                <span className="w-5 h-[1.5px] bg-slate-900 group-hover:bg-red-600 transition-all rounded-full" />
+                <span className="w-3.5 h-[1.5px] bg-slate-900 group-hover:bg-red-600 transition-all rounded-full" />
+              </button>
+            )}
           </div>
         </div>
       </header>

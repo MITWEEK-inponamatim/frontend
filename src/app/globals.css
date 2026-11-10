@@ -121,11 +121,85 @@
   }
 }
 
+/* Meja moderasi (/admin) dipinjam dari buku register perkara, bukan dari dashboard: kanvas dibuat
+   cukup dalam supaya lembaran kerja terasa putih di atasnya, satu berat garis untuk semua struktur,
+   dan warna dipakai HANYA untuk vonis — amber = masih antrean, hijau = disetujui, abu = ditolak,
+   merah = spam. Aksi memakai tinta, jadi tidak ada rona yang bisa dibaca sebagai putusan. `stripe`
+   menggarisbawahi baris selang-seling: antrean ini dibaca vertikal ratusan baris lamanya. Awalan
+   "desk-" supaya tidak bersenggolan dengan palet landing maupun papan warga. */
+@theme {
+  --color-desk-canvas: #d8dde6;
+  --color-desk-paper: #ffffff;
+  --color-desk-sink: #eef1f6;
+  --color-desk-stripe: #f7f8fb;
+  --color-desk-rule: #ccd3de;
+  --color-desk-edge: #a7b0be;
+  --color-desk-ink: #0f141b;
+  --color-desk-muted: #56606f;
+  --color-desk-faint: #717b8b;
+  --color-desk-queue: #8f5708;
+  --color-desk-approved: #0a6135;
+  --color-desk-declined: #49535f;
+  --color-desk-spam: #932e26;
+  /* Nomor laporan adalah hal yang sedang diadili, jadi ia satu-satunya yang memakai mono: digit
+     tabular yang bisa dijejerkan dari atas ke bawah. Label kecil cukup angka tabular sans. */
+  --font-desk-data: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+}
+
+/* Kerangka console meja moderasi (sidebar rail + drawer, header, kartu metrik, grafik, tabel).
+   Susunannya diambil dari komponen dashboard yang diminta; warnanya TIDAK. Lampiran datang dengan
+   kanvas krem #f7f3ea dan aksen terakota #ec7d43 — itu palet generik, sementara meja ini buku
+   register perkara. Jadi setiap token di bawah hanya menyambung ulang ke palet "Buku Register" di
+   atas: satu warna aksi (tinta), dan rona verdict (amber/hijau/abu/merah) tetap HANYA dipakai untuk
+   vonis, tidak untuk grafik atau angka naik-turun — kalau tidak, sebuah garis bisa dibaca putusan.
+   Awalan "shell-" untuk permukaan, "mark-" untuk rona semantic. */
+:root {
+  --shell-bg: var(--color-desk-canvas);
+  --shell-surface: var(--color-desk-paper);
+  --shell-panel: var(--color-desk-sink);
+  --shell-hover: #eff2f7;
+  --shell-active: #e2e8f1;
+  --shell-field: #f5f7fb;
+  --shell-field-inset: #e9edf4;
+  --shell-menu: rgba(255, 255, 255, 0.94);
+  --shell-border: var(--color-desk-rule);
+  --shell-border-strong: var(--color-desk-edge);
+  --shell-text: var(--color-desk-ink);
+  --shell-text-medium: #2b3543;
+  --shell-text-muted: var(--color-desk-muted);
+  --shell-text-soft: var(--color-desk-faint);
+  --shell-text-faint: #929bab;
+  --shell-accent: var(--color-desk-ink);
+  --shell-accent-soft: rgba(15, 20, 27, 0.09);
+  --shell-accent-ink: var(--color-desk-ink);
+  --shell-accent-fill: var(--color-desk-ink);
+  --shell-accent-fill-ink: var(--color-desk-paper);
+  --shell-focus: rgba(15, 20, 27, 0.3);
+  --shell-shadow-soft: 0 1px 1px rgba(15, 20, 27, 0.05);
+  --shell-shadow-surface: 0 1px 2px rgba(15, 20, 27, 0.06), 0 10px 24px -14px rgba(15, 20, 27, 0.3);
+  --shell-shadow-menu: 0 12px 32px -12px rgba(15, 20, 27, 0.4);
+  --shell-shadow-inset: inset 0 1px 2px rgba(15, 20, 27, 0.05);
+  --mark-success: var(--color-desk-approved);
+  --mark-success-soft: #e3efe7;
+  --mark-error: var(--color-desk-spam);
+  --mark-error-soft: #f5e5e3;
+  --mark-warning: var(--color-desk-queue);
+  --mark-warning-soft: #f7ecd8;
+  --mark-quiet: var(--color-desk-declined);
+  /* Garis putus-putus "periode sebelumnya": harus jelas beda dari garis nyata tapi tidak boleh
+     dibaca sebagai salah satu vonis, jadi ia tetap abu tepi, bukan merah. */
+  --mark-ghost: var(--color-desk-edge);
+}
+
+@theme {
+  --font-shell-display: var(--font-pp-neue-montreal), "PP Neue Montreal Book", "PP Neue Montreal", sans-serif;
+  --font-shell-data: var(--font-desk-data);
+}
+
 /* Reset headings default browser bold */
 h1, h2, h3, h4, h5, h6 {
   font-weight: inherit;
 }
-
 html, body {
   background-color: #ffffff;
   color: #09090b;

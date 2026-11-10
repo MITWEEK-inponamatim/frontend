@@ -24,12 +24,15 @@ export function IdleSessionMonitor() {
     let lastHeartbeat = 0;
     const getLast = () => Number(sessionStorage.getItem(STORAGE_KEY));
     const update = () => channel?.postMessage(markActive());
+    // Every tab is sent back through the door it came in by: the desk has its own sign-in page, and
+    // a moderator dumped at the citizen login would have to find /admin again by hand.
+    const door = () => (location.pathname.startsWith("/admin") ? "/admin/login?reason=idle" : "/login?reason=idle");
     // sessionStorage, not localStorage: one tab keeps its own idle clock through the OAuth
     // round-trip, but a fresh visit counts from now. A key that outlived logout made anybody
     // signing in again after an hour away get signed straight back out, on every retry.
     const onRemote = (event: MessageEvent<number | string>) => {
       if (typeof event.data === "number") { sessionStorage.setItem(STORAGE_KEY, String(event.data)); setWarning(false); }
-      else if (event.data === "logout") router.replace("/login?reason=idle");
+      else if (event.data === "logout") router.replace(door());
     };
     const activity = () => { if (Date.now() - getLast() > ACTIVITY_FLOOR_MS) update(); };
     const verify = async () => {
@@ -39,7 +42,7 @@ export function IdleSessionMonitor() {
         // An idle timeout closes this tab's session only; the default global scope would also
         // revoke the user's refresh token on their other devices.
         await createClient().auth.signOut({ scope: "local" });
-        router.replace("/login?reason=idle");
+        router.replace(door());
         return;
       }
       setWarning(remaining <= WARNING_MS);

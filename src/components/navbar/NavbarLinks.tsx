@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const NAV_ITEMS = [
   { label: "Pindai", href: "/recognize" },
@@ -12,25 +13,28 @@ const NAV_ITEMS = [
   { label: "Panduan", href: "/guide" },
 ];
 
+// Only the moderation desk is offered conditionally: it is a door, and a door that leads to a 403
+// is not navigation.
+const ADMIN_ITEM = { label: "Moderasi", href: "/admin" };
+
+function isCurrent(href: string, pathname: string) {
+  if (href === "/recognize") return pathname === "/recognize" || pathname.startsWith("/recognize/");
+  if (href === "/history") return pathname === "/history";
+  return pathname.startsWith(href === "/community/latest" ? "/community" : href);
+}
+
 /**
  * Centered desktop navigation links with current route awareness.
  */
 export function NavbarLinks() {
   const pathname = usePathname();
+  const isAdmin = useIsAdmin();
+  const items = isAdmin ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS;
 
   return (
     <nav className="hidden md:flex items-center gap-1 sm:gap-2">
-      {NAV_ITEMS.map((item) => {
-        const isActive =
-          item.href === "/recognize"
-            ? pathname === "/recognize" || pathname.startsWith("/recognize/")
-            : item.href === "/history"
-            ? pathname === "/history"
-            : item.href === "/learn"
-            ? pathname.startsWith("/learn")
-            : item.href === "/guide"
-            ? pathname.startsWith("/guide")
-            : pathname.startsWith("/community");
+      {items.map((item) => {
+        const isActive = isCurrent(item.href, pathname);
 
         return (
           <Link

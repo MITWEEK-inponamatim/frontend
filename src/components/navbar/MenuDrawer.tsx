@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface MenuDrawerProps {
   isOpen: boolean;
@@ -18,7 +19,13 @@ const MENU_LINKS = [
   { label: "Panduan Keamanan", href: "/guide" },
 ];
 
+// The desk only appears for accounts the API says may open it.
+const ADMIN_LINK = { label: "Meja Moderasi", href: "/admin" };
+
 export function MenuDrawer({ isOpen, onClose, onOpenContact }: MenuDrawerProps) {
+  const isAdmin = useIsAdmin();
+  const links = isAdmin ? [...MENU_LINKS, ADMIN_LINK] : MENU_LINKS;
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -71,7 +78,7 @@ export function MenuDrawer({ isOpen, onClose, onOpenContact }: MenuDrawerProps) 
 
           {/* Navigation Items */}
           <nav className="mt-8 flex flex-col space-y-6">
-            {MENU_LINKS.map((item) => (
+            {links.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

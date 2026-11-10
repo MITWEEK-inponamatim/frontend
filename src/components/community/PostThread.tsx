@@ -2,9 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { api } from "@/lib/api";
 import { CategoryChip } from "@/components/community/CategoryChip";
+import { DeletePostControl } from "@/components/community/DeletePostControl";
+import { DeleteCommentControl } from "@/components/community/DeleteCommentControl";
+import { MobileNavLink } from "@/components/community/MobileNavLink";
 import { AliasDisc, NumberHandle } from "@/components/community/NumberHandle";
 import {
   COMMENT_MAX,
@@ -51,6 +55,7 @@ export function PostThread({
   const [sending, setSending] = useState(false);
   const [zoomImage, setZoomImage] = useState(false);
   const [copied, setCopied] = useState(false);
+  const router = useRouter();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -135,6 +140,33 @@ export function PostThread({
       setErrorMessage(communityMessage(failure instanceof Error ? failure.message : null));
     } finally {
       setSending(false);
+    }
+  };
+
+  // The story is gone once this answers, so the thread leaves the page rather than trying to show
+  // what it just deleted.
+  const remove = async () => {
+    try {
+      await api(`/api/v1/community/posts/${postID}`, { method: "DELETE" });
+      router.replace("/community/latest");
+      return true;
+    } catch (failure) {
+      setErrorMessage(communityMessage(failure instanceof Error ? failure.message : null));
+      return false;
+    }
+  };
+
+  // A comment is erased where it stands: the thread is re-read rather than patched, because the
+  // replies under it leave too — a list edited by hand would keep showing children of a row that
+  // does not exist any more.
+  const removeComment = async (commentID: string) => {
+    try {
+      await api(`/api/v1/community/posts/${postID}/comments/${commentID}`, { method: "DELETE" });
+      await load();
+      return true;
+    } catch (failure) {
+      setErrorMessage(communityMessage(failure instanceof Error ? failure.message : null));
+      return false;
     }
   };
 
@@ -246,34 +278,36 @@ export function PostThread({
           </div>
 
           {/* Tools Quick Links */}
-          <div className="space-y-1 pt-3 border-t border-slate-100 text-left">
-            <span className="px-3 text-[11px] font-normal uppercase tracking-wider text-slate-400 block text-left">
-              Pintasan Fitur
-            </span>
-            <div className="space-y-0.5 pt-1 text-left">
-              <Link
-                href="/recognize"
-                className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
-              >
-                <Icon icon="solar:shield-check-linear" className="h-4 w-4 text-slate-400" />
-                <span>Pindai Target</span>
-              </Link>
-              <Link
-                href="/history"
-                className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
-              >
-                <Icon icon="solar:history-linear" className="h-4 w-4 text-slate-400" />
-                <span>Riwayat Scan</span>
-              </Link>
-              <Link
-                href="/learn"
-                className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
-              >
-                <Icon icon="solar:book-2-linear" className="h-4 w-4 text-slate-400" />
-                <span>Simulasi Belajar</span>
-              </Link>
+          {!isAdmin && (
+            <div className="space-y-1 pt-3 border-t border-slate-100 text-left">
+              <span className="px-3 text-[11px] font-normal uppercase tracking-wider text-slate-400 block text-left">
+                Pintasan Fitur
+              </span>
+              <div className="space-y-0.5 pt-1 text-left">
+                <Link
+                  href="/recognize"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                >
+                  <Icon icon="solar:shield-check-linear" className="h-4 w-4 text-slate-400" />
+                  <span>Pindai Target</span>
+                </Link>
+                <Link
+                  href="/history"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                >
+                  <Icon icon="solar:history-linear" className="h-4 w-4 text-slate-400" />
+                  <span>Riwayat Scan</span>
+                </Link>
+                <Link
+                  href="/learn"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                >
+                  <Icon icon="solar:book-2-linear" className="h-4 w-4 text-slate-400" />
+                  <span>Simulasi Belajar</span>
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="p-3 text-[11px] font-normal leading-relaxed text-slate-400 text-left">
@@ -455,6 +489,10 @@ export function PostThread({
                 />
                 <span>{copied ? "Tersalin!" : "Salin Link"}</span>
               </button>
+
+              {post.is_author && (
+                <DeletePostControl onDelete={remove} triggerClassName="px-2.5 py-1.5" />
+              )}
             </div>
 
             <Link
@@ -537,6 +575,8 @@ export function PostThread({
                   <CommentRow
                     comment={thread}
                     authorAlias={post.author_alias}
+                    hasReplies={(thread.replies?.length ?? 0) > 0}
+                    onDelete={() => removeComment(thread.id)}
                     onReply={() => {
                       setReplyTo(thread);
                       setReply("");
@@ -551,6 +591,7 @@ export function PostThread({
                         comment={replyItem}
                         authorAlias={post.author_alias}
                         nested
+                        onDelete={() => removeComment(replyItem.id)}
                       />
                     ))}
 
@@ -689,13 +730,7 @@ export function PostThread({
         aria-label="Navigasi Mobile"
         className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-slate-100 bg-white/95 backdrop-blur-sm py-2 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] md:hidden shadow-lg"
       >
-        <Link
-          href="/"
-          className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-500 hover:text-slate-900 transition-colors"
-        >
-          <Icon icon="solar:magnifer-linear" className="h-5 w-5" />
-          <span>Pindai</span>
-        </Link>
+        <MobileNavLink href={isAdmin ? null : "/"} icon="solar:magnifer-linear" label="Pindai" />
         <Link
           href="/community/latest"
           className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-900 transition-colors"
@@ -710,13 +745,7 @@ export function PostThread({
           <Icon icon="solar:chat-round-line-linear" className="h-5 w-5" />
           <span>Komentar</span>
         </a>
-        <Link
-          href="/guide"
-          className="flex min-w-0 flex-col items-center gap-1 text-[11px] font-normal text-slate-500 hover:text-slate-900 transition-colors"
-        >
-          <Icon icon="solar:book-2-linear" className="h-5 w-5" />
-          <span>Panduan</span>
-        </Link>
+        <MobileNavLink href={isAdmin ? null : "/guide"} icon="solar:book-2-linear" label="Panduan" />
       </nav>
     </div>
   );
@@ -724,16 +753,22 @@ export function PostThread({
 
 /**
  * Renders an individual comment item with alias disc, OP author badge, and inline reply trigger.
+ * The delete trigger only ever appears on the reader's own rows — the API stamps is_author and
+ * refuses anybody else's comment, so this is presentation of a rule the server already holds.
  */
 function CommentRow({
   comment,
   authorAlias,
   nested = false,
+  hasReplies = false,
+  onDelete,
   onReply,
 }: {
   comment: CommunityComment;
   authorAlias?: string;
   nested?: boolean;
+  hasReplies?: boolean;
+  onDelete?: () => Promise<boolean>;
   onReply?: () => void;
 }) {
   const isOriginalPoster = authorAlias && comment.author_alias === authorAlias;
@@ -766,17 +801,22 @@ function CommentRow({
           {comment.body}
         </p>
 
-        {/* Reply Trigger for root comments */}
-        {onReply && (
+        {/* Reply Trigger for root comments + erase for the reader's own */}
+        {(onReply || (comment.is_author && onDelete)) && (
           <div className="mt-1.5 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onReply}
-              className="inline-flex items-center gap-1 text-xs font-normal text-slate-500 hover:text-red-600 transition-colors"
-            >
-              <Icon icon="solar:chat-round-line-linear" className="h-3.5 w-3.5" />
-              <span>Balas</span>
-            </button>
+            {onReply && (
+              <button
+                type="button"
+                onClick={onReply}
+                className="inline-flex items-center gap-1 text-xs font-normal text-slate-500 hover:text-red-600 transition-colors"
+              >
+                <Icon icon="solar:chat-round-line-linear" className="h-3.5 w-3.5" />
+                <span>Balas</span>
+              </button>
+            )}
+            {comment.is_author && onDelete && (
+              <DeleteCommentControl hasReplies={hasReplies} onDelete={onDelete} />
+            )}
           </div>
         )}
       </div>

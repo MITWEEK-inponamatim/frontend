@@ -6,13 +6,22 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { AliasDisc } from "./NumberHandle";
 import { CategoryChip } from "./CategoryChip";
+import { DeletePostControl } from "./DeletePostControl";
 import { excerpt, timeAgo, displayNumber, type CommunityPost } from "@/lib/community";
 import { phoneSlug } from "@/lib/phone";
 
 /**
  * X/Twitter-style community discussion card displaying citizen reports and action metrics.
  */
-export function PostCard({ post, onVote }: { post: CommunityPost; onVote: (postID: string, value: number) => void }) {
+export function PostCard({
+  post,
+  onVote,
+  onRemove,
+}: {
+  post: CommunityPost;
+  onVote: (postID: string, value: number) => void;
+  onRemove: (postID: string) => Promise<boolean>;
+}) {
   const router = useRouter();
   const [zoomImage, setZoomImage] = useState(false);
   const href = `/community/${post.id}`;
@@ -170,6 +179,12 @@ export function PostCard({ post, onVote }: { post: CommunityPost; onVote: (postI
             <Icon icon="solar:arrow-right-up-linear" className="h-3.5 w-3.5 shrink-0" />
             <span className="font-normal">Cek Nomor</span>
           </Link>
+
+          {post.is_author && (
+            <div className="ml-auto">
+              <DeletePostControl onDelete={() => onRemove(post.id)} />
+            </div>
+          )}
         </footer>
       </div>
     </article>

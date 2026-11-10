@@ -148,7 +148,7 @@ export function ReportNumberPanel({
                 Laporan untuk nomor <span className="font-normal text-slate-900">{sent.number_e164 ? displayNumber(sent.number_e164) : number}</span> telah kami terima beserta bukti tangkapan layar.
               </p>
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-left text-xs font-normal leading-relaxed text-slate-500">
-                Nomor akan masuk daftar &apos;Nomor Berbahaya&apos; jika diverifikasi oleh minimal dua laporan dari warga berbeda.
+                Nomor akan masuk daftar &apos;Nomor Berbahaya&apos; setelah laporan Anda disetujui moderator.
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
                 <Link

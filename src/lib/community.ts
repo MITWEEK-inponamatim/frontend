@@ -28,6 +28,8 @@ export type CommunityPost = {
   comment_count: number;
   created_at: string;
   my_vote?: number;
+  // Stamped by the API: this story is the reader's own, so the board may offer to delete it.
+  is_author?: boolean;
 };
 
 export type CommunityComment = {
@@ -36,6 +38,8 @@ export type CommunityComment = {
   parent_id?: string;
   body: string;
   author_alias: string;
+  /** Stamped by the API: this row is the reader's own, so it may be erased by them. */
+  is_author?: boolean;
   created_at: string;
   replies?: CommunityComment[];
 };

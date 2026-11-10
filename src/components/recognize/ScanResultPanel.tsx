@@ -163,11 +163,6 @@ export function ScanResultPanel({
                   />
                   <div className="min-w-0 flex-1 text-left">
                     <span>{finding.indicator}</span>
-                    {finding.source && (
-                      <span className="ml-1.5 text-xs text-slate-400 font-mono">
-                        ({finding.source})
-                      </span>
-                    )}
                   </div>
                 </div>
               );
@@ -178,6 +173,15 @@ export function ScanResultPanel({
             Tidak ditemukan indikator ancaman mencurigakan pada sampel ini.
           </p>
         )}
+
+        <p className="pt-1 text-xs font-normal leading-relaxed text-slate-500 text-left">
+          Begini cara membacanya: daftar di atas adalah catatan hasil pemeriksaan, bukan daftar
+          bahaya. Ikon oranye menandai hal kecil yang perlu diperhatikan, misalnya situs belum
+          memasang fitur keamanan tambahan. Ikon merah menandakan indikasi kuat: jangan masukkan
+          kata sandi, data pribadi, atau kirim uang. Bila daftarnya kosong, tidak ada tanda bahaya
+          yang terdeteksi — itu bukan jaminan aman, jadi tetap periksa ulang alamat atau nomornya
+          sebelum mengirim data.
+        </p>
 
         {/* Community Reviews if present */}
         {reviews.length > 0 && (
