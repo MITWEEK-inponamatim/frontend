@@ -1,9 +1,8 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 
 /**
- * Official ThreatLens brand logo linking to the root path.
+ * Minimalist geometric cross logo and brand mark linking to the root path.
  *
  * `href = null` renders the same mark without a destination. A moderator on the community board is
  * kept inside that board, and a brand mark that quietly sends them to the scanner is the most
@@ -11,21 +10,18 @@ import Image from "next/image";
  */
 export function NavbarLogo({ href = "/" }: { href?: string | null }) {
   const mark = (
-    <div className="relative flex items-center">
-      <Image
-        src="/Logo.png"
-        alt="ThreatLens"
-        width={160}
-        height={25}
-        priority
-        className="h-6 sm:h-7 w-auto object-contain transition-opacity group-hover:opacity-85"
-      />
-    </div>
+    <>
+      <div className="relative w-5 h-5 flex items-center justify-center">
+        <span className="absolute w-[1.5px] h-4.5 bg-slate-900 rounded-full group-hover:bg-red-600 transition-colors" />
+        <span className="absolute h-[1.5px] w-4.5 bg-slate-900 rounded-full group-hover:bg-red-600 transition-colors" />
+      </div>
+      <span className="text-sm font-semibold tracking-tight text-slate-900">ThreatLens</span>
+    </>
   );
 
   if (!href) {
     return (
-      <span className="inline-flex items-center p-1 select-none" aria-label="ThreatLens">
+      <span className="inline-flex items-center gap-2.5 p-1" aria-label="ThreatLens">
         {mark}
       </span>
     );
@@ -34,7 +30,7 @@ export function NavbarLogo({ href = "/" }: { href?: string | null }) {
   return (
     <Link
       href={href}
-      className="group inline-flex items-center p-1 rounded-lg transition-opacity hover:opacity-85"
+      className="group inline-flex items-center gap-2.5 p-1 rounded-lg transition-opacity hover:opacity-80"
       aria-label="Beranda ThreatLens"
     >
       {mark}
